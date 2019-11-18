@@ -61,6 +61,7 @@ class MyWin(QtWidgets.QMainWindow):  # Авторизация юзера
             else:
                 self.ui.label_3.setText("Incorrect login or pass")
         MyApp3.show()
+        MyApp3.ui2.label_14.setText(update_log)
 
         sch_part = []
         dir_name = glob.glob('C:\Cadence\Company\EKTOS_CIS\SCH_Libraries/**/*.OLB')
@@ -75,6 +76,9 @@ class MyWin(QtWidgets.QMainWindow):  # Авторизация юзера
             # print(x)
             y = x.split('\\')[1]
             sch_part.append(y)
+        MyApp3.ui2.comboBox_67.addItem('')
+        MyApp3.ui2.comboBox_68.addItem('')
+        MyApp3.ui2.comboBox_69.addItem('')
         for peremennaya in sch_part:
             MyApp3.ui2.comboBox_67.addItem(str(peremennaya))
             MyApp3.ui2.comboBox_68.addItem(str(peremennaya))
@@ -95,6 +99,11 @@ class MyWin(QtWidgets.QMainWindow):  # Авторизация юзера
             x = some.replace("C:\\Cadence\\Company\\EKTOS_CIS\\_NEW_PARTS_\\", "")
             y = x.split('\\')[1]
             pcb_foot.append(y)
+        MyApp3.ui2.comboBox_70.addItem('')
+        MyApp3.ui2.comboBox_71.addItem('')
+        MyApp3.ui2.comboBox_72.addItem('')
+        MyApp3.ui2.comboBox_73.addItem('')
+        MyApp3.ui2.comboBox_74.addItem('')
         for peremennaya in pcb_foot:
             MyApp3.ui2.comboBox_70.addItem(str(peremennaya))
             MyApp3.ui2.comboBox_71.addItem(str(peremennaya))
@@ -112,6 +121,7 @@ class MyWin(QtWidgets.QMainWindow):  # Авторизация юзера
             x = some.replace("C:\\Cadence\\Company\\EKTOS_CIS\\_NEW_PARTS_\\", "")
             y = x.split('\\')[1]
             datasheets.append(y)
+        MyApp3.ui2.comboBox_75.addItem('')
         for peremennaya in datasheets:
             MyApp3.ui2.comboBox_75.addItem(str(peremennaya))
 
@@ -177,7 +187,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
 
         self.ui2 = Ui_MainWindow2()
         self.ui2.setupUi(self)
-        self.ui2.pushButton_9.clicked.connect(self.first_serch)
+        # self.ui2.pushButton_9.clicked.connect(self.first_serch)
         self.ui2.pushButton.clicked.connect(self.relayadd)
         self.ui2.pushButton_2.clicked.connect(self.resistor)
         self.ui2.pushButton_3.clicked.connect(self.transistor)
@@ -205,6 +215,230 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.pushButton_28.clicked.connect(self.datasheet_view)
         self.ui2.pushButton_27.clicked.connect(self.refresh)
         self.ui2.pushButton_26.clicked.connect(self.clear)
+        self.ui2.listFound.itemClicked.connect(self.lict)
+
+        # self.ui2.boxSearch1.activated.connect(self.prinprintprint)
+
+        mydb = mysql.connector.connect(
+            host="mysql.ektos.net",
+            user="dpe",
+            passwd="dpe",
+            database="dpe",
+            charset='utf8',
+        )
+        mycursor = mydb.cursor()
+        mycursor.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = 'test_relay' order by ordinal_position;")
+        self.ui2.boxSearch1.addItem('')
+        self.ui2.boxSearch2.addItem('')
+        self.ui2.boxSearch3.addItem('')
+        for variable in mycursor:
+            b = str(variable)
+            fixed1 = ''.join(b.split(")"))
+            fixed2 = ''.join(fixed1.split("("))
+            fixed3 = ''.join(fixed2.split("'"))
+            fixed4 = ''.join(fixed3.split(","))
+            global columns_name
+            self.ui2.boxSearch1.addItem(str(fixed4))
+            self.ui2.boxSearch2.addItem(str(fixed4))
+            self.ui2.boxSearch3.addItem(str(fixed4))
+
+            if fixed4 == 'vcoil':
+                break
+
+        self.ui2.editSearch1.returnPressed.connect(self.search_1)
+        self.ui2.editSearch2.returnPressed.connect(self.search_2)
+        self.ui2.editSearch3.returnPressed.connect(self.search_3)
+
+    def search_1(self):
+        global d
+        self.ui2.listFound.clear()
+        mydb = mysql.connector.connect(
+            host="mysql.ektos.net",
+            user="dpe",
+            passwd="dpe",
+            database="dpe",
+            charset='utf8',
+        )
+        mycursor = mydb.cursor()
+
+        c = self.ui2.editSearch1.text()
+        parametr = self.ui2.boxSearch1.currentText()
+        d = []
+        # mycursor.execute(
+        #     "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = 'test_relay' order by ordinal_position;")
+        mycursor.execute("SELECT ektospn FROM test_relay WHERE {} LIKE '%{}%'".format(parametr, c))
+        for variable in mycursor:
+            b = str(variable)
+            fixed1 = ''.join(b.split(")"))
+            fixed2 = ''.join(fixed1.split("("))
+            fixed3 = ''.join(fixed2.split("'"))
+            fixed4 = ''.join(fixed3.split(","))
+            d.append(fixed4)
+
+        for variable in d:
+            print(variable)
+            self.ui2.listFound.addItem(variable)
+
+
+
+
+            # mycursor.execute("SELECT Part_Number FROM {} WHERE {} LIKE '%{}%'".format(table2, search2, c))
+        # for somedata in mycursor:
+        #
+        #     x = str(somedata)
+        #     if somedata == 'Manufacturer' or somedata == 'Man_Part_Number' or somedata == 'Man_Part_Number' or somedata == 'Vendor' or somedata == 'Vendor_Code':
+        #         self.ui2.listFound.addItem(str(x))
+
+    def search_2(self):
+        self.ui2.listFound.clear()
+        e = self.ui2.editSearch2.text()
+        d2 = []
+        parametr2 = self.ui2.boxSearch2.currentText()
+        mydb = mysql.connector.connect(
+            host="mysql.ektos.net",
+            user="dpe",
+            passwd="dpe",
+            database="dpe",
+            charset='utf8',
+        )
+        mycursor = mydb.cursor()
+        print(d)
+        for some in d:
+            mycursor.execute(
+                "SELECT ektospn FROM test_relay WHERE {} LIKE '%{}%' AND ektospn = '{}'".format(parametr2, e, some))
+            for variable2 in mycursor:
+                b = str(variable2)
+                fixed1 = ''.join(b.split(")"))
+                fixed2 = ''.join(fixed1.split("("))
+                fixed3 = ''.join(fixed2.split("'"))
+                fixed4 = ''.join(fixed3.split(","))
+                d2.append(fixed4)
+        for variable in d2:
+            print(variable)
+            self.ui2.listFound.addItem(variable)
+
+    def search_3(self):
+
+        self.ui2.listFound.clear()
+        f = self.ui2.editSearch3.text()
+        d3 = []
+        parametr3 = self.ui2.boxSearch3.currentText()
+        mydb = mysql.connector.connect(
+            host="mysql.ektos.net",
+            user="dpe",
+            passwd="dpe",
+            database="dpe",
+            charset='utf8',
+        )
+        mycursor = mydb.cursor()
+        print(d)
+        for some in d:
+            mycursor.execute(
+                "SELECT ektospn FROM test_relay WHERE {} LIKE '%{}%' AND ektospn = '{}'".format(parametr3, f, some))
+            for variable3 in mycursor:
+                b = str(variable3)
+                fixed1 = ''.join(b.split(")"))
+                fixed2 = ''.join(fixed1.split("("))
+                fixed3 = ''.join(fixed2.split("'"))
+                fixed4 = ''.join(fixed3.split(","))
+                d3.append(fixed4)
+        for variable in d3:
+            print(variable)
+            self.ui2.listFound.addItem(variable)
+
+    def lict(self, item):
+        print('OK')
+        masiv = []
+        mydb = mysql.connector.connect(
+            host="mysql.ektos.net",
+            user="dpe",
+            passwd="dpe",
+            database="dpe",
+            charset='utf8',
+        )
+        mycursor = mydb.cursor()
+        mycursor.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = 'test_relay' order by ordinal_position;")
+        for variable in mycursor:
+            print(variable)
+            b = str(variable)
+            fixed1 = ''.join(b.split(")"))
+            fixed2 = ''.join(fixed1.split("("))
+            fixed3 = ''.join(fixed2.split("'"))
+            fixed4 = ''.join(fixed3.split(","))
+            masiv.append(fixed4)
+
+        self.ui2.tableViewPatameters.setRowCount(len(masiv))
+        global k
+        k = 0
+        for i in masiv:
+            k += 1
+            self.ui2.tableViewPatameters.setItem(k-1, 0, QTableWidgetItem(i))
+
+        mydb = mysql.connector.connect(
+            host="mysql.ektos.net",
+            user="dpe",
+            passwd="dpe",
+            database="dpe",
+            charset='utf8',
+        )
+        mycursor = mydb.cursor()
+
+        found_item = item.text()
+        print(found_item)
+
+        mycursor.execute("SELECT * FROM test_relay WHERE ektospn = '{}'".format(found_item))
+        for data12 in mycursor:
+            print(data12)
+            global coount
+            coount = -1
+            for i in data12:
+                i2 = str(i)
+                coount +=1
+                self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i2))
+
+
+
+        # global found_item
+        # found_item = item.text()
+        #
+        # mydb = mysql.connector.connect(
+        #     host="mysql.ektos.net",
+        #     user="dpe",
+        #     passwd="dpe",
+        #     database="dpe",
+        #     charset='utf8',
+        # )
+        # mycursor = mydb.cursor()
+        # a = 'Part_Number'
+        # b = table1
+        #
+        # c = found_item
+        # fixed1 = ''.join(c.split(")"))
+        # fixed2 = ''.join(fixed1.split("("))
+        # fixed3 = ''.join(fixed2.split("'"))
+        # fixed3 = ''.join(fixed3.split(","))
+        #
+        # mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+        # for data12 in mycursor:
+        #     global coount
+        #     coount = -1
+        #     for i in data12:
+        #         coount +=1
+        #         self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i))
+        # b = table2
+        # mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+        # for data12 in mycursor:
+        #     coount1 = -1
+        #     for i in data12:
+        #         coount1 += 1
+        #         if coount1 == 2 or coount1 == 3 or coount1 == 5 or coount1 == 6:
+        #             coount += 1
+        #             self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i))
+        #
+        # self.ui2.pushButton_14.clicked.connect(self.edit_component)
+        # self.ui2.pushButton_15.clicked.connect(self.review_component)
 
 
     def clear(self):
@@ -1174,123 +1408,209 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.groupBox_2.setEnabled(True)
         self.ui2.groupBox_4.setEnabled(True)
 
-    def first_serch(self):
-        global search1
-        search1 = self.ui2.boxSearch1.currentText()
-        self.ui2.editSearch1.setText(search1)
-        self.ui2.boxSearch2.setEnabled(True)
-        self.ui2.editSearch2.setEnabled(False)
-        self.ui2.pushButton_12.setEnabled(True)
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        global table1
-        global table2
-        table = search1
-
-        if table == 'Relay':
-            table1 = 'ektos_2019_relay'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'Resistor':
-            table1 = 'ektos_2019_resistor'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'Transistor':
-            table1 = 'ektos_2019_transistor'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'Connector':
-            table1 = 'ektos_2019_connector'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'Diode':
-            table1 = 'ektos_2019_diode'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'Inductor':
-            table1 = 'ektos_2019_inductor'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'Capacitor':
-            table1 = 'ektos_2019_capacitor'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'IntegratedCircuit':
-            table1 = 'ektos_2019_integratedcircuit'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'Mechanical':
-            table1 = 'ektos_2019_mechanical'
-            table2 = '2019_ektos_cis_vendors'
-        elif table == 'Other':
-            table1 = 'ektos_2019_other'
-            table2 = '2019_ektos_cis_vendors'
-
-        mycursor.execute("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(table1))
-        counter = 0
-        global masiv
-        masiv = []
-        self.ui2.boxSearch2.clear()
-        for table_name in mycursor:
-            b = str(table_name)
-            fixed1 = ''.join(b.split(")"))
-            fixed2 = ''.join(fixed1.split("("))
-            fixed3 = ''.join(fixed2.split("'"))
-            fixed4 = ''.join(fixed3.split(","))
-            self.ui2.boxSearch2.addItem(str(fixed4))
-
-            masiv.append(fixed4)
-            global counter2
-            counter+=1
-            counter2 = counter
-        mycursor.execute("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(table2))
-        counter = 0
-
-        for table_name in mycursor:
-            b = str(table_name)
-            fixed1 = ''.join(b.split(")"))
-            fixed2 = ''.join(fixed1.split("("))
-            fixed3 = ''.join(fixed2.split("'"))
-            fixed4 = ''.join(fixed3.split(","))
-            if fixed4 == 'Manufacturer' or fixed4 == 'Man_Part_Number' or fixed4 == 'Man_Part_Number' or fixed4 == 'Vendor' or fixed4 == 'Vendor_Code':
-                self.ui2.boxSearch2.addItem(str(fixed4))
-                masiv.append(fixed4)
-        self.ui2.pushButton_12.clicked.connect(self.second_serch)
-    def second_serch(self):
-        global search2
-        search2 = self.ui2.boxSearch2.currentText()
-        self.ui2.editSearch2.setText(search2)
-        self.ui2.editSearch3.setEnabled(True)
-        self.ui2.pushButton_13.setEnabled(True)
-        self.ui2.pushButton_13.clicked.connect(self.third_serch)
-        global edit_search
-        edit_search = self.ui2.editSearch3.returnPressed.connect(self.onPressed)
-        v = self.ui2.editSearch3.show()
-
-    def third_serch(self):
-        self.ui2.listFound.clear()
-        global search3
-
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        a = search2
-        b = table1
-        mycursor.execute("SELECT Part_Number FROM {}".format(b))
-        for data in mycursor:
-            b = str(data)
-            fixed1 = ''.join(b.split(")"))
-            fixed2 = ''.join(fixed1.split("("))
-            fixed3 = ''.join(fixed2.split("'"))
-            fixed3 = ''.join(fixed3.split(","))
-            self.ui2.listFound.addItem(str(fixed3))
-
-        self.ui2.listFound.itemDoubleClicked.connect(self.lict)
+    # def first_serch(self):
+    #     global search1
+    #     search1 = self.ui2.boxSearch1.currentText()
+    #     self.ui2.boxSearch1.activated(self.prinprintprint)
+    #     self.ui2.editSearch1.setText(search1)
+    #     self.ui2.boxSearch2.setEnabled(True)
+    #     self.ui2.editSearch2.setEnabled(False)
+    #     self.ui2.pushButton_12.setEnabled(True)
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     global table1
+    #     global table2
+    #     table = search1
+    #
+    #     if table == 'Relay':
+    #         table1 = 'ektos_2019_relay'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'Resistor':
+    #         table1 = 'ektos_2019_resistor'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'Transistor':
+    #         table1 = 'ektos_2019_transistor'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'Connector':
+    #         table1 = 'ektos_2019_connector'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'Diode':
+    #         table1 = 'ektos_2019_diode'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'Inductor':
+    #         table1 = 'ektos_2019_inductor'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'Capacitor':
+    #         table1 = 'ektos_2019_capacitor'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'IntegratedCircuit':
+    #         table1 = 'ektos_2019_integratedcircuit'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'Mechanical':
+    #         table1 = 'ektos_2019_mechanical'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif table == 'Other':
+    #         table1 = 'ektos_2019_other'
+    #         table2 = '2019_ektos_cis_vendors'
+    #
+    #     mycursor.execute("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(table1))
+    #     counter = 0
+    #     global masiv
+    #     masiv = []
+    #     self.ui2.boxSearch2.clear()
+    #     for table_name in mycursor:
+    #         b = str(table_name)
+    #         fixed1 = ''.join(b.split(")"))
+    #         fixed2 = ''.join(fixed1.split("("))
+    #         fixed3 = ''.join(fixed2.split("'"))
+    #         fixed4 = ''.join(fixed3.split(","))
+    #         self.ui2.boxSearch2.addItem(str(fixed4))
+    #
+    #         masiv.append(fixed4)
+    #         global counter2
+    #         counter+=1
+    #         counter2 = counter
+    #     mycursor.execute("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(table2))
+    #     counter = 0
+    #
+    #     for table_name in mycursor:
+    #         b = str(table_name)
+    #         fixed1 = ''.join(b.split(")"))
+    #         fixed2 = ''.join(fixed1.split("("))
+    #         fixed3 = ''.join(fixed2.split("'"))
+    #         fixed4 = ''.join(fixed3.split(","))
+    #         if fixed4 == 'Manufacturer' or fixed4 == 'Man_Part_Number' or fixed4 == 'Man_Part_Number' or fixed4 == 'Vendor' or fixed4 == 'Vendor_Code':
+    #             self.ui2.boxSearch2.addItem(str(fixed4))
+    #             masiv.append(fixed4)
+    #     self.ui2.pushButton_12.clicked.connect(self.second_serch)
+    #
+    # def prinprintprint(self):
+    #     table = self.ui2.boxSearch1.currentText()
+    #     self.ui2.editSearch1.setText(table)
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     global table1
+    #     global table2
+    #
+    #     if table == 'Relay':
+    #         table1 = 'test_relay'
+    #         table2 = 'test_vendor'
+    #         self.ui2.boxSearch2.setEnabled(True)
+    #     # elif table == 'Resistor':
+    #     #     table1 = 'ektos_2019_resistor'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #     # elif table == 'Transistor':
+    #     #     table1 = 'ektos_2019_transistor'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #     # elif table == 'Connector':
+    #     #     table1 = 'ektos_2019_connector'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #     # elif table == 'Diode':
+    #     #     table1 = 'ektos_2019_diode'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #     # elif table == 'Inductor':
+    #     #     table1 = 'ektos_2019_inductor'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #     # elif table == 'Capacitor':
+    #     #     table1 = 'ektos_2019_capacitor'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #     # elif table == 'IntegratedCircuit':
+    #     #     table1 = 'ektos_2019_integratedcircuit'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #     # elif table == 'Mechanical':
+    #     #     table1 = 'ektos_2019_mechanical'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #     # elif table == 'Other':
+    #     #     table1 = 'ektos_2019_other'
+    #     #     table2 = '2019_ektos_cis_vendors'
+    #
+    #     mycursor.execute(
+    #         "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(
+    #             table1))
+    #     counter = 0
+    #     global masiv
+    #     masiv = []
+    #     self.ui2.boxSearch2.clear()
+    #     for table_name in mycursor:
+    #         b = str(table_name)
+    #         fixed1 = ''.join(b.split(")"))
+    #         fixed2 = ''.join(fixed1.split("("))
+    #         fixed3 = ''.join(fixed2.split("'"))
+    #         fixed4 = ''.join(fixed3.split(","))
+    #         self.ui2.boxSearch2.addItem(str(fixed4))
+    #
+    #         masiv.append(fixed4)
+    #         global counter2
+    #         counter += 1
+    #         counter2 = counter
+    #     mycursor.execute(
+    #         "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(
+    #             table2))
+    #     counter = 0
+    #
+    #     for table_name in mycursor:
+    #         b = str(table_name)
+    #         fixed1 = ''.join(b.split(")"))
+    #         fixed2 = ''.join(fixed1.split("("))
+    #         fixed3 = ''.join(fixed2.split("'"))
+    #         fixed4 = ''.join(fixed3.split(","))
+    #         if fixed4 == 'Manufacturer' or fixed4 == 'Man_Part_Number' or fixed4 == 'Man_Part_Number' or fixed4 == 'Vendor' or fixed4 == 'Vendor_Code':
+    #             self.ui2.boxSearch2.addItem(str(fixed4))
+    #             masiv.append(fixed4)
+    #     self.ui2.pushButton_12.clicked.connect(self.second_serch)
+    #
+    #
+    #
+    # def second_serch(self):
+    #     global search2
+    #     search2 = self.ui2.boxSearch2.currentText()
+    #     self.ui2.editSearch2.setText(search2)
+    #     self.ui2.editSearch3.setEnabled(True)
+    #     self.ui2.pushButton_13.setEnabled(True)
+    #     self.ui2.pushButton_13.clicked.connect(self.third_serch)
+    #     global edit_search
+    #     edit_search = self.ui2.editSearch3.returnPressed.connect(self.onPressed)
+    #     v = self.ui2.editSearch3.show()
+    #
+    # def third_serch(self):
+    #     self.ui2.listFound.clear()
+    #     global search3
+    #
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     a = search2
+    #     b = table1
+    #     mycursor.execute("SELECT Part_Number FROM {}".format(b))
+    #     for data in mycursor:
+    #         b = str(data)
+    #         fixed1 = ''.join(b.split(")"))
+    #         fixed2 = ''.join(fixed1.split("("))
+    #         fixed3 = ''.join(fixed2.split("'"))
+    #         fixed3 = ''.join(fixed3.split(","))
+    #         self.ui2.listFound.addItem(str(fixed3))
+    #
+    #     self.ui2.listFound.itemDoubleClicked.connect(self.lict)
     def onPressed(self):
         self.ui2.editSearch3
         mydb = mysql.connector.connect(
@@ -1352,52 +1672,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
             if somedata == 'Manufacturer' or somedata == 'Man_Part_Number' or somedata == 'Man_Part_Number' or somedata == 'Vendor' or somedata == 'Vendor_Code':
                 self.ui2.listFound.addItem(str(x))
 
-    def lict(self, item):
-        self.ui2.tableViewPatameters.setRowCount(len(masiv))
-        global k
-        k = 0
-        for i in masiv:
-            k += 1
-            self.ui2.tableViewPatameters.setItem(k-1, 0, QTableWidgetItem(i))
-        global found_item
-        found_item = item.text()
 
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        a = 'Part_Number'
-        b = table1
-
-        c = found_item
-        fixed1 = ''.join(c.split(")"))
-        fixed2 = ''.join(fixed1.split("("))
-        fixed3 = ''.join(fixed2.split("'"))
-        fixed3 = ''.join(fixed3.split(","))
-
-        mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-        for data12 in mycursor:
-            global coount
-            coount = -1
-            for i in data12:
-                coount +=1
-                self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i))
-        b = table2
-        mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-        for data12 in mycursor:
-            coount1 = -1
-            for i in data12:
-                coount1 += 1
-                if coount1 == 2 or coount1 == 3 or coount1 == 5 or coount1 == 6:
-                    coount += 1
-                    self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i))
-
-        self.ui2.pushButton_14.clicked.connect(self.edit_component)
-        self.ui2.pushButton_15.clicked.connect(self.review_component)
 
     def review_component(self):
         type_of_component = self.ui2.boxSearch1.currentText()
