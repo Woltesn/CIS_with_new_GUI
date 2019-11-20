@@ -2,6 +2,7 @@
 import webbrowser
 import subprocess
 import sys
+import connect_to_db
 import svn.remote
 import pprint
 import svn.local
@@ -15,6 +16,11 @@ from GUI_PyQt5_Designer.Login_user import *
 from GUI_PyQt5_Designer.Main_window_tabs import *
 from Log_On_CIS import *
 from time import gmtime, strftime
+import json
+
+global data
+with open('config.json') as json_data_file:
+    data = json.load(json_data_file)
 
 class MyWin(QtWidgets.QMainWindow):  # Авторизация юзера
     def __init__(self, parent=None):
@@ -31,7 +37,6 @@ class MyWin(QtWidgets.QMainWindow):  # Авторизация юзера
     def loginuser(self):
         MyApp2.show()
 
-
     def getresult(self):
         global log
         self.aboutshow1 = Second()
@@ -41,7 +46,7 @@ class MyWin(QtWidgets.QMainWindow):  # Авторизация юзера
 
         # MySQL connect to DB
         mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
+            host=data['mysql']['host'],
             user="dpe",
             passwd="dpe",
             database="dpe",
@@ -161,7 +166,7 @@ class Second(QtWidgets.QMainWindow, Ui_Form):  # Логин нового юзе�
         pas2_newuser = self.ui1.Edit_repeat_password.text()
         if pas_newuser == pas2_newuser:
             mydb = mysql.connector.connect(
-                host="mysql.ektos.net",
+                host=data['mysql']['host'],
                 user="dpe",
                 passwd="dpe",
                 database="dpe",
@@ -188,7 +193,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2 = Ui_MainWindow2()
         self.ui2.setupUi(self)
         # self.ui2.pushButton_9.clicked.connect(self.first_serch)
-        self.ui2.pushButton.clicked.connect(self.relayadd)
+        # self.ui2.pushButton.clicked.connect(self.relayadd)
         self.ui2.pushButton_2.clicked.connect(self.resistor)
         self.ui2.pushButton_3.clicked.connect(self.transistor)
         self.ui2.pushButton_4.clicked.connect(self.connector)
@@ -216,11 +221,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.pushButton_27.clicked.connect(self.refresh)
         self.ui2.pushButton_26.clicked.connect(self.clear)
         self.ui2.listFound.itemClicked.connect(self.lict)
+        self.ui2.pushButton.clicked.connect(self.add_to_db)
 
         # self.ui2.boxSearch1.activated.connect(self.prinprintprint)
 
         mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
+            host=data['mysql']['host'],
             user="dpe",
             passwd="dpe",
             database="dpe",
@@ -250,38 +256,46 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.editSearch2.returnPressed.connect(self.search_2)
         self.ui2.editSearch3.returnPressed.connect(self.search_3)
 
-    def search_1(self):
-        global d
-        self.ui2.listFound.clear()
+    def connect_to_db(self):
         mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
+            host=data['mysql']['host'],
+            user=data['mysql']['user'],
+            passwd=data['mysql']['passwd'],
+            database=data['mysql']['db'],
             charset='utf8',
         )
         mycursor = mydb.cursor()
+        return mycursor
+
+    def search_1(self):
+        global all_component_arrey
+        all_component_arrey = ['test_relay', 'test_resistor']  #ДОБАВИТЬ НОВЫЕ ТАБЛИЦИ СЮДА
+        print(all_component_arrey)
+        global d
+        self.ui2.listFound.clear()
+
+## Connection to DB __________________________________________________________________________________
+
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
+
 
         c = self.ui2.editSearch1.text()
         parametr = self.ui2.boxSearch1.currentText()
         d = []
-        # mycursor.execute(
-        #     "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = 'test_relay' order by ordinal_position;")
-        mycursor.execute("SELECT ektospn FROM test_relay WHERE {} LIKE '%{}%'".format(parametr, c))
-        for variable in mycursor:
-            b = str(variable)
-            fixed1 = ''.join(b.split(")"))
-            fixed2 = ''.join(fixed1.split("("))
-            fixed3 = ''.join(fixed2.split("'"))
-            fixed4 = ''.join(fixed3.split(","))
-            d.append(fixed4)
+
+        for peremennaya in all_component_arrey:
+            mycursor.execute("SELECT ektospn FROM {} WHERE {} LIKE '%{}%'".format(peremennaya, parametr, c))
+            for variable in mycursor:
+                b = str(variable)
+                fixed1 = ''.join(b.split(")"))
+                fixed2 = ''.join(fixed1.split("("))
+                fixed3 = ''.join(fixed2.split("'"))
+                fixed4 = ''.join(fixed3.split(","))
+                d.append(fixed4)
 
         for variable in d:
-            print(variable)
             self.ui2.listFound.addItem(variable)
-
-
-
 
             # mycursor.execute("SELECT Part_Number FROM {} WHERE {} LIKE '%{}%'".format(table2, search2, c))
         # for somedata in mycursor:
@@ -295,15 +309,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         e = self.ui2.editSearch2.text()
         d2 = []
         parametr2 = self.ui2.boxSearch2.currentText()
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        print(d)
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
         for some in d:
             mycursor.execute(
                 "SELECT ektospn FROM test_relay WHERE {} LIKE '%{}%' AND ektospn = '{}'".format(parametr2, e, some))
@@ -315,7 +322,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
                 fixed4 = ''.join(fixed3.split(","))
                 d2.append(fixed4)
         for variable in d2:
-            print(variable)
             self.ui2.listFound.addItem(variable)
 
     def search_3(self):
@@ -348,57 +354,48 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
             self.ui2.listFound.addItem(variable)
 
     def lict(self, item):
-        print('OK')
+        global peremennaya
         masiv = []
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
+        found_item = item.text()
+        for perem in all_component_arrey:
+            mycursor.execute("SELECT EXISTS(SELECT ektospn FROM {} WHERE ektospn = '{}')".format(perem, found_item))
+            for some_data in mycursor:
+                if str(some_data) == '(1,)':
+                    peremennaya = perem
         mycursor.execute(
-            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = 'test_relay' order by ordinal_position;")
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(peremennaya))
         for variable in mycursor:
-            print(variable)
             b = str(variable)
             fixed1 = ''.join(b.split(")"))
             fixed2 = ''.join(fixed1.split("("))
             fixed3 = ''.join(fixed2.split("'"))
             fixed4 = ''.join(fixed3.split(","))
             masiv.append(fixed4)
-
         self.ui2.tableViewPatameters.setRowCount(len(masiv))
         global k
         k = 0
+        print(masiv)
         for i in masiv:
             k += 1
             self.ui2.tableViewPatameters.setItem(k-1, 0, QTableWidgetItem(i))
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-
-        found_item = item.text()
-        print(found_item)
-
-        mycursor.execute("SELECT * FROM test_relay WHERE ektospn = '{}'".format(found_item))
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
+        global masiv_for_edit_data
+        masiv_for_edit_data = []
+        mycursor.execute("SELECT * FROM {} WHERE ektospn = '{}'".format(peremennaya, found_item))
         for data12 in mycursor:
-            print(data12)
             global coount
+            print(data12)
             coount = -1
             for i in data12:
                 i2 = str(i)
-                coount +=1
+                print(i2)
+                coount += 1
+                masiv_for_edit_data.append(i2)
                 self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i2))
-
-
+        self.ui2.pushButton_14.clicked.connect(self.edit_value)
 
         # global found_item
         # found_item = item.text()
@@ -440,6 +437,175 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         # self.ui2.pushButton_14.clicked.connect(self.edit_component)
         # self.ui2.pushButton_15.clicked.connect(self.review_component)
 
+    def add_to_db(self):
+        part_num = self.ui2.lineEdit_250.text()
+        part_type = self.ui2.boxStatus_50.currentText()
+        value = self.ui2.lineEdit_251.text()
+        description = self.ui2.lineEdit_252.text()
+        schematic_part = self.ui2.comboBox_67.currentText()
+        pcb_footprint = self.ui2.comboBox_70.currentText()
+        rohs = self.ui2.boxStatus_53.currentText()
+        status = self.ui2.boxStatus_49.currentText()
+        datasheet = self.ui2.comboBox_75.currentText()
+        notes = self.ui2.lineEdit_258.text()
+        create_date = self.ui2.label_14.text()
+        rewiew_date = self.ui2.label_19.text()
+        updaye_date = self.ui2.label_17.text()
+        m_type = self.ui2.boxStatus_35.currentText()
+        t_min = self.ui2.lineEdit_218.text()
+        t_max = self.ui2.lineEdit_232.text()
+        project_num = self.ui2.lineEdit_259.text()
+        height = self.ui2.lineEdit_236.text()
+        automative_st = self.ui2.boxStatus_54.currentText()
+
+        vcoil = self.ui2.lineEdit_254.text()
+        icoil = self.ui2.lineEdit_255.text()
+        vsw_dc = self.ui2.lineEdit_256.text()
+        vsw_ac = self.ui2.lineEdit_257.text()
+        isw_dc = self.ui2.lineEdit_274.text()
+        isw_ac = self.ui2.lineEdit_285.text()
+        cont_form = self.ui2.lineEdit_287.text()
+        lxw = self.ui2.lineEdit_239.text()
+        mydb = mysql.connector.connect(
+            host="mysql.ektos.net",
+            user="dpe",
+            passwd="dpe",
+            database="dpe",
+            charset='utf8',
+        )
+        mycursor = mydb.cursor()
+        sql = "INSERT INTO test_relay (ektospn, part_type, value, description, schematic_part1, pcb_footprint1, rohs," \
+              "status, datasheet, notes, create1, reviewed, update1, m_type, tmin, tmax, project_number, height, " \
+              "automotivest, vcoil, icoil, vsw_dc, vsw_ac, isw_dc, isw_ac, contact_form, lxw) VALUES " \
+              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+              "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+              "%s, %s, %s, %s, %s, %s, %s)"
+        val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
+               rohs, status, datasheet, notes, create_date, rewiew_date, updaye_date, m_type, t_min,
+               t_max, project_num, height, automative_st, vcoil, icoil, vsw_dc, vsw_ac, isw_dc, isw_ac, cont_form, lxw)
+        mycursor.execute(sql, val)
+
+        # __________________________________________________________________
+        #
+        # sql = "INSERT INTO ektos_2019_inductor (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
+        #       "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
+        #       "M_Type, Tmin, Tmax, Height, AutomotiveStandard, RmsCurrent, SaturationCurrent, DcresistanceMax, Size) VALUES " \
+        #       "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+        #       "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+        #       "%s, %s, %s, %s)"
+        # val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
+        #        rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
+        #        t_max, height, automativ_standart, rms_current, saturation_current, dcresistance_max, siz
+
+
+
+
+
+    def edit_value(self):
+        if peremennaya == 'test_relay':
+            self.ui2.tabWidget.setCurrentIndex(0)
+            self.ui2.lineEdit_250.setText(masiv_for_edit_data[0])
+            self.ui2.boxStatus_50.setCurrentText(masiv_for_edit_data[1])
+            self.ui2.lineEdit_251.setText(masiv_for_edit_data[2])
+            self.ui2.lineEdit_252.setText(masiv_for_edit_data[3])
+            self.ui2.comboBox_67.setItemText(0, masiv_for_edit_data[4])
+            self.ui2.comboBox_70.setItemText(0, masiv_for_edit_data[5])
+            self.ui2.boxStatus_53.setCurrentText(masiv_for_edit_data[6])
+            self.ui2.boxStatus_49.setCurrentText(masiv_for_edit_data[7])
+            self.ui2.comboBox_75.setItemText(0, masiv_for_edit_data[8])
+            self.ui2.lineEdit_258.setText(masiv_for_edit_data[9])
+            self.ui2.label_14.setText(masiv_for_edit_data[10])
+            self.ui2.label_19.setText(masiv_for_edit_data[11])
+            self.ui2.label_17.setText(masiv_for_edit_data[12])
+            self.ui2.boxStatus_35.setCurrentText(masiv_for_edit_data[13])
+            self.ui2.lineEdit_218.setText(masiv_for_edit_data[14])
+            self.ui2.lineEdit_232.setText(masiv_for_edit_data[15])
+            self.ui2.lineEdit_259.setText(masiv_for_edit_data[16])
+            self.ui2.lineEdit_236.setText(masiv_for_edit_data[17])
+            self.ui2.boxStatus_54.setCurrentText(masiv_for_edit_data[18])
+
+            self.ui2.lineEdit_254.setText(masiv_for_edit_data[19])
+            self.ui2.lineEdit_255.setText(masiv_for_edit_data[20])
+            self.ui2.lineEdit_256.setText(masiv_for_edit_data[21])
+            self.ui2.lineEdit_257.setText(masiv_for_edit_data[22])
+            self.ui2.lineEdit_274.setText(masiv_for_edit_data[23])
+            self.ui2.lineEdit_285.setText(masiv_for_edit_data[24])
+            self.ui2.lineEdit_287.setText(masiv_for_edit_data[25])
+            self.ui2.lineEdit_239.setText(masiv_for_edit_data[26])
+
+        # self.ui2.tabWidget.setCurrentIndex(0)
+        # a = strftime("%Y%m%d", gmtime())  # дата и время
+        # update_log = a+'('+log+')'
+        # self.ui2.label_22.setText(str(update_log))
+        # self.ui2.label_18.setEnabled(False)
+        # mydb = mysql.connector.connect(
+        #     host="mysql.ektos.net",
+        #     user="dpe",
+        #     passwd="dpe",
+        #     database="dpe",
+        #     charset='utf8',
+        # )
+        # mycursor = mydb.cursor()
+        # a = 'Part_Number'
+        # b = table1
+        # c = found_item
+        # fixed1 = ''.join(c.split(")"))
+        # fixed2 = ''.join(fixed1.split("("))
+        # fixed3 = ''.join(fixed2.split("'"))
+        # fixed3 = ''.join(fixed3.split(","))
+        # mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+        # counter = -1
+        # for data12 in mycursor:
+        #     b = data12
+        #     for i in data12:
+        #         counter += 1
+        # self.ui2.lineEdit_1.setText(b[0])
+        # self.ui2.lineEdit_2.setText(b[1])
+        # self.ui2.lineEdit_3.setText(b[2])
+        # self.ui2.lineEdit_4.setText(b[3])
+        # self.ui2.lineEdit_5.setText(b[4])
+        # self.ui2.lineEdit_6.setText(b[5])
+        # self.ui2.boxStatus_31.setCurrentText(b[6])
+        # self.ui2.boxStatus.setCurrentText(b[7])
+        # self.ui2.lineEdit_9.setText(b[8])
+        # self.ui2.lineEdit_10.setText(b[9])
+        # self.ui2.lineEdit_11.setText(b[10])
+        # self.ui2.lineEdit_12.setText(b[11])
+        # self.ui2.lineEdit_13.setText(b[12])
+        # self.ui2.lineEdit_14.setText(b[13])
+        # self.ui2.lineEdit_15.setText(str(update_log))
+        # self.ui2.lineEdit_15.setEnabled(False)
+        # self.ui2.boxStatus_32.setCurrentText(b[15])
+        # self.ui2.lineEdit_33.setText(b[16])
+        # self.ui2.lineEdit_34.setText(b[17])
+        # self.ui2.lineEdit_35.setText(b[18])
+        # self.ui2.lineEdit_36.setText(b[19])
+        # self.ui2.lineEdit_37.setText(b[20])
+        # self.ui2.lineEdit_38.setText(b[21])
+        # self.ui2.lineEdit_39.setText(b[22])
+        # self.ui2.lineEdit_40.setText(b[23])
+        # self.ui2.lineEdit_41.setText(b[24])
+        # self.ui2.lineEdit_42.setText(b[25])
+        # self.ui2.lineEdit_43.setText(b[26])
+        # self.ui2.lineEdit_44.setText(b[27])
+        # self.ui2.boxStatus_28.setCurrentText(b[28])
+        # self.ui2.boxStatus_29.setCurrentText(b[29])
+        # self.ui2.lineEdit_47.setText(b[30])
+        # self.ui2.lineEdit_48.setText(b[31])
+        # b = table2
+        # mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+        # counter = -1
+        # for data12 in mycursor:
+        #     b = data12
+        #     for i in data12:
+        #         counter += 1
+        # self.ui2.lineEdit_58.setText(b[4])  # vendor
+        # self.ui2.lineEdit_64.setText(b[5])  # vendor code
+        # self.ui2.lineEdit_45.setText(b[3])  # man part number
+        # self.ui2.lineEdit_46.setText(b[2])  # manufacture
+        #
+        # self.ui2.lineEdit_13.setEnabled(False)
+        # self.ui2.pushButton.clicked.connect(self.relayadd)
 
     def clear(self):
         self.ui2.label_2.clear()
@@ -461,6 +627,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.lineEdit_218.clear()
         self.ui2.lineEdit_232.clear()
         self.ui2.lineEdit_236.clear()
+        self.ui2.lineEdit_259.clear()
         self.ui2.lineEdit_239.clear()
         self.ui2.lineEdit_265.clear()
         self.ui2.lineEdit_258.clear()
@@ -3058,122 +3225,122 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
             self.ui2.pushButton_3.clicked.connect(self.transistor())
 
 
-    def relayadd(self):
-        a = strftime("%Y%m%d", gmtime())
-        global update_log
-        update_log = a + '(' + log + ')'
-
-        relay_id = self.ui2.label_2.text()
-        relay_status = self.ui2.boxStatus_49.currentText()
-        relay_ektospn = self.ui2.lineEdit_250.text()
-        relay_part_type = self.ui2.boxStatus_50.currentText()
-        relay_value = self.ui2.lineEdit_251.text()
-        relay_manufacture = self.ui2.lineEdit_5.text()
-        relay_manufacture_pn = self.ui2.lineEdit_6.text()
-        relay_description = self.ui2.lineEdit_252.text()
-        relay_schematic_part1 = self.ui2.comboBox_67.currentText()
-        relay_schematic_part2 = self.ui2.comboBox_68.currentText()
-        relay_schematic_part3 = self.ui2.comboBox_69.currentText()
-        relay_pcb_footprint1 = self.ui2.comboBox_70.currentText()
-        relay_pcb_footprint2 = self.ui2.comboBox_71.currentText()
-        relay_pcb_footprint3 = self.ui2.comboBox_72.currentText()
-        relay_pcb_footprint4 = self.ui2.comboBox_73.currentText()
-        relay_pcb_footprint5 = self.ui2.comboBox_74.currentText()
-        relay_datasheet = self.ui2.lineEdit_38.text()
-        realy_vcoil = self.ui2.lineEdit_254.text()
-        relay_icoil = self.ui2.lineEdit_255.text()
-        relay_vsw_dc = self.ui2.lineEdit_256.text()
-        relay_vsw_ac = self.ui2.lineEdit_257.text()
-        relay_isw_dc = self.ui2.lineEdit_274.text()
-        relay_isw_ac = self.ui2.lineEdit_285.text()
-        relay_contact_form = self.lineEdit_287.text()
-        relay_tmin = self.ui2.lineEdit_218.text()
-        relay_tmax = self.ui2.lineEdit_232.text()
-        relay_height = self.ui2.lineEdit_236.text()
-        relay_lxw = self.ui2.lineEdit_239.text()
-        relay_m_type = self.ui2.boxStatus_35.currentText()
-        relay_rohs = self.ui2.boxStatus_53.currentText()
-        relay_automotivest = self.ui2.boxStatus_54.currentText()
-        relay_part_class = self.ui2.boxStatus_55.currentText()
-        relay_notes = self.ui2.lineEdit_258.text()
-        relay_vendor = self.ui2.boxVendor.currentText()
-        relay_vendor_code = self.ui2.lineEdit_248.text()
-        relay_alternative_vendor = self.ui2.boxVendor_2.currentText()
-        rekay_alternative_vendor_code = self.ui2.lineEdit_259.text()
-        relay_create = self.ui2.label_14.text()
-        relay_update = self.ui2.label_17.text()
-        relay_reviewed = self.ui2.label_19.text()
-        self.ui2.label_14.setText(update_log)
-
-        # # self.ui2.lineEdit_13.setText(update_log)
-        # part_num = self.ui2.lineEdit_1.text()
-        # part_type = self.ui2.lineEdit_2.text()
-        # value = self.ui2.lineEdit_3.text()
-        # description = self.ui2.lineEdit_4.text()
-        # # schematic_part = self.ui2.lineEdit_5.text()
-        # # pcb_footprint = self.ui2.lineEdit_6.text()
-        # status = self.ui2.boxStatus.currentText()
-        # rohs = self.ui2.boxStatus_31.currentText()
-        # datasheet = self.ui2.lineEdit_9.text()
-        # # image = self.ui2.lineEdit_10.text()
-        # notes = self.ui2.lineEdit_11.text()
-        # part_class = self.ui2.lineEdit_12.text()
-        # # create_date = self.ui2.lineEdit_13.text()
-        # # rewiew_date = self.ui2.lineEdit_14.text()
-        # # updaye_date = self.ui2.lineEdit_15.text()
-        # m_type = self.ui2.boxStatus_32.currentText()
-        # t_min = self.ui2.lineEdit_33.text()
-        # t_max = self.ui2.lineEdit_34.text()
-        # height = self.ui2.lineEdit_35.text()
-        # automative = self.ui2.lineEdit_36.text()
-        # vcoil_min = self.ui2.lineEdit_37.text()
-        # vcoil_nom = self.ui2.lineEdit_38.text()
-        # vcoil_max = self.ui2.lineEdit_39.text()
-        # coil_power = self.ui2.lineEdit_40.text()
-        # max_switch_voltage_dc = self.ui2.lineEdit_41.text()
-        # max_switch_voltage_ac =self.ui2.lineEdit_42.text()
-        # max_switch_current_dc = self.ui2.lineEdit_43.text()
-        # max_switch_current_ac = self.ui2.lineEdit_44.text()
-        # # latched = self.ui2.boxStatus_28.currentText()
-        # # polarized_coil = self.ui2.boxStatus_29.currentText()
-        # # contact_types = self.ui2.lineEdit_47.text()
-        # # size = self.ui2.lineEdit_48.text()
-        # # vendor = self.ui2.lineEdit_58.text()
-        # # vendor_code = self.ui2.lineEdit_64.text()
-        # # manufacturer = self.ui2.lineEdit_46.text()
-        # # man_part_number = self.ui2.lineEdit_45.text()
-        # # create_user = myapp.logpas[0]
-        # # if self.ui2.label_18.setEnabled == True:
-        # #     self.ui2.label_18.setText(create_user)
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        # if self.ui2.lineEdit_1.text() != '':
-        #
-        mycursor = mydb.cursor()
-        sql = "INSERT INTO test_relay (relay_id, relay_status, relay_ektospn, relay_part_type, relay_value, " \
-              "relay_manufacture, relay_manufacture_pn, relay_description, relay_schematic_part1, relay_pcb_footprint1," \
-              " relay_datasheet,realy_vcoil, relay_icoil, relay_vsw_dc, relay_vsw_ac, relay_isw_dc, relay_isw_ac, " \
-              "relay_contact_form, relay_tmin, relay_tmax, relay_height, relay_lxw, relay_m_type, relay_rohs, " \
-              "relay_automotivest, relay_part_class, relay_notes) VALUES " \
-              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
-              " %s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
-              " %s, %s, %s, %s, %s, %s, %s)"
-        val = (relay_id, relay_status, relay_ektospn, relay_part_type, relay_value, relay_manufacture, relay_manufacture_pn,
-               relay_description, relay_schematic_part1, relay_pcb_footprint1, relay_datasheet,realy_vcoil, relay_icoil,
-               relay_vsw_dc, relay_vsw_ac, relay_isw_dc, relay_isw_ac, relay_contact_form, relay_tmin, relay_tmax,
-               relay_height, relay_lxw, relay_m_type, relay_rohs, relay_automotivest, relay_part_class, relay_notes,
-               relay_create, relay_update, relay_reviewed)
-        mycursor.execute(sql, val)
-        sql_vendor = "INSERT INTO test_vendor (ektospn, manufacture, manufacture_pn, datasheet, vendor, " \
-              "vendor_code, create, update, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val_vendor = (relay_ektospn, relay_manufacture, relay_manufacture_pn, relay_datasheet, relay_vendor,
-                      relay_vendor_code, relay_create, relay_update, relay_notes)
-        mycursor.execute(sql_vendor, val_vendor)
+    # def relayadd(self):
+    #     a = strftime("%Y%m%d", gmtime())
+    #     global update_log
+    #     update_log = a + '(' + log + ')'
+    #
+    #     relay_id = self.ui2.label_2.text()
+    #     relay_status = self.ui2.boxStatus_49.currentText()
+    #     relay_ektospn = self.ui2.lineEdit_250.text()
+    #     relay_part_type = self.ui2.boxStatus_50.currentText()
+    #     relay_value = self.ui2.lineEdit_251.text()
+    #     relay_manufacture = self.ui2.lineEdit_5.text()
+    #     relay_manufacture_pn = self.ui2.lineEdit_6.text()
+    #     relay_description = self.ui2.lineEdit_252.text()
+    #     relay_schematic_part1 = self.ui2.comboBox_67.currentText()
+    #     relay_schematic_part2 = self.ui2.comboBox_68.currentText()
+    #     relay_schematic_part3 = self.ui2.comboBox_69.currentText()
+    #     relay_pcb_footprint1 = self.ui2.comboBox_70.currentText()
+    #     relay_pcb_footprint2 = self.ui2.comboBox_71.currentText()
+    #     relay_pcb_footprint3 = self.ui2.comboBox_72.currentText()
+    #     relay_pcb_footprint4 = self.ui2.comboBox_73.currentText()
+    #     relay_pcb_footprint5 = self.ui2.comboBox_74.currentText()
+    #     relay_datasheet = self.ui2.lineEdit_38.text()
+    #     realy_vcoil = self.ui2.lineEdit_254.text()
+    #     relay_icoil = self.ui2.lineEdit_255.text()
+    #     relay_vsw_dc = self.ui2.lineEdit_256.text()
+    #     relay_vsw_ac = self.ui2.lineEdit_257.text()
+    #     relay_isw_dc = self.ui2.lineEdit_274.text()
+    #     relay_isw_ac = self.ui2.lineEdit_285.text()
+    #     relay_contact_form = self.lineEdit_287.text()
+    #     relay_tmin = self.ui2.lineEdit_218.text()
+    #     relay_tmax = self.ui2.lineEdit_232.text()
+    #     relay_height = self.ui2.lineEdit_236.text()
+    #     relay_lxw = self.ui2.lineEdit_239.text()
+    #     relay_m_type = self.ui2.boxStatus_35.currentText()
+    #     relay_rohs = self.ui2.boxStatus_53.currentText()
+    #     relay_automotivest = self.ui2.boxStatus_54.currentText()
+    #     relay_part_class = self.ui2.boxStatus_55.currentText()
+    #     relay_notes = self.ui2.lineEdit_258.text()
+    #     relay_vendor = self.ui2.boxVendor.currentText()
+    #     relay_vendor_code = self.ui2.lineEdit_248.text()
+    #     relay_alternative_vendor = self.ui2.boxVendor_2.currentText()
+    #     rekay_alternative_vendor_code = self.ui2.lineEdit_259.text()
+    #     relay_create = self.ui2.label_14.text()
+    #     relay_update = self.ui2.label_17.text()
+    #     relay_reviewed = self.ui2.label_19.text()
+    #     self.ui2.label_14.setText(update_log)
+    #
+    #     # # self.ui2.lineEdit_13.setText(update_log)
+    #     # part_num = self.ui2.lineEdit_1.text()
+    #     # part_type = self.ui2.lineEdit_2.text()
+    #     # value = self.ui2.lineEdit_3.text()
+    #     # description = self.ui2.lineEdit_4.text()
+    #     # # schematic_part = self.ui2.lineEdit_5.text()
+    #     # # pcb_footprint = self.ui2.lineEdit_6.text()
+    #     # status = self.ui2.boxStatus.currentText()
+    #     # rohs = self.ui2.boxStatus_31.currentText()
+    #     # datasheet = self.ui2.lineEdit_9.text()
+    #     # # image = self.ui2.lineEdit_10.text()
+    #     # notes = self.ui2.lineEdit_11.text()
+    #     # part_class = self.ui2.lineEdit_12.text()
+    #     # # create_date = self.ui2.lineEdit_13.text()
+    #     # # rewiew_date = self.ui2.lineEdit_14.text()
+    #     # # updaye_date = self.ui2.lineEdit_15.text()
+    #     # m_type = self.ui2.boxStatus_32.currentText()
+    #     # t_min = self.ui2.lineEdit_33.text()
+    #     # t_max = self.ui2.lineEdit_34.text()
+    #     # height = self.ui2.lineEdit_35.text()
+    #     # automative = self.ui2.lineEdit_36.text()
+    #     # vcoil_min = self.ui2.lineEdit_37.text()
+    #     # vcoil_nom = self.ui2.lineEdit_38.text()
+    #     # vcoil_max = self.ui2.lineEdit_39.text()
+    #     # coil_power = self.ui2.lineEdit_40.text()
+    #     # max_switch_voltage_dc = self.ui2.lineEdit_41.text()
+    #     # max_switch_voltage_ac =self.ui2.lineEdit_42.text()
+    #     # max_switch_current_dc = self.ui2.lineEdit_43.text()
+    #     # max_switch_current_ac = self.ui2.lineEdit_44.text()
+    #     # # latched = self.ui2.boxStatus_28.currentText()
+    #     # # polarized_coil = self.ui2.boxStatus_29.currentText()
+    #     # # contact_types = self.ui2.lineEdit_47.text()
+    #     # # size = self.ui2.lineEdit_48.text()
+    #     # # vendor = self.ui2.lineEdit_58.text()
+    #     # # vendor_code = self.ui2.lineEdit_64.text()
+    #     # # manufacturer = self.ui2.lineEdit_46.text()
+    #     # # man_part_number = self.ui2.lineEdit_45.text()
+    #     # # create_user = myapp.logpas[0]
+    #     # # if self.ui2.label_18.setEnabled == True:
+    #     # #     self.ui2.label_18.setText(create_user)
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     # if self.ui2.lineEdit_1.text() != '':
+    #     #
+    #     mycursor = mydb.cursor()
+    #     sql = "INSERT INTO test_relay (relay_id, relay_status, relay_ektospn, relay_part_type, relay_value, " \
+    #           "relay_manufacture, relay_manufacture_pn, relay_description, relay_schematic_part1, relay_pcb_footprint1," \
+    #           " relay_datasheet,realy_vcoil, relay_icoil, relay_vsw_dc, relay_vsw_ac, relay_isw_dc, relay_isw_ac, " \
+    #           "relay_contact_form, relay_tmin, relay_tmax, relay_height, relay_lxw, relay_m_type, relay_rohs, " \
+    #           "relay_automotivest, relay_part_class, relay_notes) VALUES " \
+    #           "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+    #           " %s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+    #           " %s, %s, %s, %s, %s, %s, %s)"
+    #     val = (relay_id, relay_status, relay_ektospn, relay_part_type, relay_value, relay_manufacture, relay_manufacture_pn,
+    #            relay_description, relay_schematic_part1, relay_pcb_footprint1, relay_datasheet,realy_vcoil, relay_icoil,
+    #            relay_vsw_dc, relay_vsw_ac, relay_isw_dc, relay_isw_ac, relay_contact_form, relay_tmin, relay_tmax,
+    #            relay_height, relay_lxw, relay_m_type, relay_rohs, relay_automotivest, relay_part_class, relay_notes,
+    #            relay_create, relay_update, relay_reviewed)
+    #     mycursor.execute(sql, val)
+    #     sql_vendor = "INSERT INTO test_vendor (ektospn, manufacture, manufacture_pn, datasheet, vendor, " \
+    #           "vendor_code, create, update, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    #     val_vendor = (relay_ektospn, relay_manufacture, relay_manufacture_pn, relay_datasheet, relay_vendor,
+    #                   relay_vendor_code, relay_create, relay_update, relay_notes)
+    #     mycursor.execute(sql_vendor, val_vendor)
 
             # if self.ui2.lineEdit_13.isEnabled() == False:
             #     try:
