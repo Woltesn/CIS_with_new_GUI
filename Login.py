@@ -183,12 +183,24 @@ class Second(QtWidgets.QMainWindow, Ui_Form):  # Логин нового юзе�
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное меню
+    global counter1
+    counter1 = 0
+
+    global masiv
+    masiv = [0]
+
+    global masiv_new
+    masiv_new = [[], [], [], []]
+
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
 
         # a = strftime("%Y%m%d", gmtime())
         # global update_log
         # update_log = a + '(' + log + ')'
+
+
+
 
         self.ui2 = Ui_MainWindow2()
         self.ui2.setupUi(self)
@@ -222,6 +234,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.pushButton_26.clicked.connect(self.clear)
         self.ui2.listFound.itemClicked.connect(self.lict)
         self.ui2.pushButton.clicked.connect(self.add_to_db)
+
+        self.ui2.pushButton_17.clicked.connect(self.add_vendor_to_table)
+
+
 
         # self.ui2.boxSearch1.activated.connect(self.prinprintprint)
 
@@ -437,7 +453,36 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         # self.ui2.pushButton_14.clicked.connect(self.edit_component)
         # self.ui2.pushButton_15.clicked.connect(self.review_component)
 
+
+    def add_vendor_to_table(self):
+        if masiv[-1]  == 9:
+            self.ui2.groupBox_25.setEnabled(False)
+            print("asadssssssssssssssssssssss")
+        manuf = self.ui2.lineEdit_5.text()
+        manuf_pn = self.ui2.lineEdit_6.text()
+        vendor = self.ui2.boxVendor.currentText()
+        vendor_code = self.ui2.lineEdit_248.text()
+        self.ui2.tableWidget.setRowCount(10)
+
+        self.ui2.tableWidget.setItem(masiv[-1], 0, QTableWidgetItem(manuf))
+        self.ui2.tableWidget.setItem(masiv[-1], 1, QTableWidgetItem(manuf_pn))
+        self.ui2.tableWidget.setItem(masiv[-1], 2, QTableWidgetItem(vendor))
+        self.ui2.tableWidget.setItem(masiv[-1], 3, QTableWidgetItem(vendor_code))
+
+        self.ui2.lineEdit_5.clear()
+        self.ui2.lineEdit_6.clear()
+        self.ui2.boxVendor.clearEditText()
+        self.ui2.lineEdit_248.clear()
+        masiv.append(int(masiv[-1]) + 1)
+
+
+        masiv_new[0].append(manuf)
+        masiv_new[1].append(manuf_pn)
+        masiv_new[2].append(vendor)
+        masiv_new[3].append(vendor_code)
+
     def add_to_db(self):
+
         part_num = self.ui2.lineEdit_250.text()
         part_type = self.ui2.boxStatus_50.currentText()
         value = self.ui2.lineEdit_251.text()
@@ -457,6 +502,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         project_num = self.ui2.lineEdit_259.text()
         height = self.ui2.lineEdit_236.text()
         automative_st = self.ui2.boxStatus_54.currentText()
+        manufacure = self.ui2.lineEdit_5.text()
+        man_pn = self.ui2.lineEdit_6.text()
+        vendor = self.ui2.boxVendor.currentText()
+        vendor_code = self.ui2.lineEdit_248.text()
 
         vcoil = self.ui2.lineEdit_254.text()
         icoil = self.ui2.lineEdit_255.text()
@@ -466,14 +515,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         isw_ac = self.ui2.lineEdit_285.text()
         cont_form = self.ui2.lineEdit_287.text()
         lxw = self.ui2.lineEdit_239.text()
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
         sql = "INSERT INTO test_relay (ektospn, part_type, value, description, schematic_part1, pcb_footprint1, rohs," \
               "status, datasheet, notes, create1, reviewed, update1, m_type, tmin, tmax, project_number, height, " \
               "automotivest, vcoil, icoil, vsw_dc, vsw_ac, isw_dc, isw_ac, contact_form, lxw) VALUES " \
@@ -484,6 +527,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
                rohs, status, datasheet, notes, create_date, rewiew_date, updaye_date, m_type, t_min,
                t_max, project_num, height, automative_st, vcoil, icoil, vsw_dc, vsw_ac, isw_dc, isw_ac, cont_form, lxw)
         mycursor.execute(sql, val)
+
+
+
+        todell = [0,1,2,3,4,5,6,7,8,9]
+        for i in todell:
+            print(i)
+            sql1 = "INSERT INTO test_vendor (ektospn, manufacture, manufacture_pn, datasheet, vendor, vendor_code, " \
+                   "create1, revie, update1, notes) VALUES " \
+                  "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            val1 = (part_num, masiv_new[0][i], masiv_new[1][i], datasheet, masiv_new[2][i], masiv_new[3][i], create_date, rewiew_date, updaye_date, notes)
+            mycursor.execute(sql1, val1)
+            if i == len(masiv_new[0])-1:
+                break
+        print(masiv_new)
+
+
+
+
 
         # __________________________________________________________________
         #
