@@ -45,14 +45,8 @@ class MyWin(QtWidgets.QMainWindow):  # Авторизация юзера
         self.logpas = (log, pas)
 
         # MySQL connect to DB
-        mydb = mysql.connector.connect(
-            host=data['mysql']['host'],
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
         mycursor.execute("SELECT * FROM login_db")
         myresult = mycursor.fetchall()
         for i in myresult:
@@ -165,18 +159,12 @@ class Second(QtWidgets.QMainWindow, Ui_Form):  # Логин нового юзе�
         pas_newuser = self.ui1.Edit_password.text()
         pas2_newuser = self.ui1.Edit_repeat_password.text()
         if pas_newuser == pas2_newuser:
-            mydb = mysql.connector.connect(
-                host=data['mysql']['host'],
-                user="dpe",
-                passwd="dpe",
-                database="dpe",
-                charset='utf8',
-            )
-            mycursor = mydb.cursor()
+            connection = connect_to_db.getConnectiot()
+            mycursor = connection.cursor()
             sql = "INSERT INTO login_db (Login, Pass) VALUES (%s, %s)"
             val = (log_newuser, pas_newuser)
             mycursor.execute(sql, val)
-            mydb.commit()
+
             self.ui1.label_4.setText("New user added successfully")
         else:
             self.ui1.label_4.setText("Error: Different passes")
@@ -206,15 +194,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.setupUi(self)
         # self.ui2.pushButton_9.clicked.connect(self.first_serch)
         # self.ui2.pushButton.clicked.connect(self.relayadd)
-        self.ui2.pushButton_2.clicked.connect(self.resistor)
-        self.ui2.pushButton_3.clicked.connect(self.transistor)
-        self.ui2.pushButton_4.clicked.connect(self.connector)
-        self.ui2.pushButton_5.clicked.connect(self.diode)
-        self.ui2.pushButton_6.clicked.connect(self.inductor)
-        self.ui2.pushButton_7.clicked.connect(self.capasitor)
-        self.ui2.pushButton_11.clicked.connect(self.integrated_circuit)
-        self.ui2.pushButton_8.clicked.connect(self.mecanical)
-        self.ui2.pushButton_10.clicked.connect(self.other)
+        # self.ui2.pushButton_2.clicked.connect(self.resistor)
+        # self.ui2.pushButton_3.clicked.connect(self.transistor)
+        # self.ui2.pushButton_4.clicked.connect(self.connector)
+        # self.ui2.pushButton_5.clicked.connect(self.diode)
+        # self.ui2.pushButton_6.clicked.connect(self.inductor)
+        # self.ui2.pushButton_7.clicked.connect(self.capasitor)
+        # self.ui2.pushButton_11.clicked.connect(self.integrated_circuit)
+        # self.ui2.pushButton_8.clicked.connect(self.mecanical)
+        # self.ui2.pushButton_10.clicked.connect(self.other)
         # self.ui2.label_14.setText(update_log)
 
         # self.ui2.lineEdit_13.setPlaceholderText('Automatically added ')
@@ -237,18 +225,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
 
         self.ui2.pushButton_17.clicked.connect(self.add_vendor_to_table)
 
+        self.ui2.pushButton_14.clicked.connect(self.edit_value)
 
 
-        # self.ui2.boxSearch1.activated.connect(self.prinprintprint)
-
-        mydb = mysql.connector.connect(
-            host=data['mysql']['host'],
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
         mycursor.execute(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = 'test_relay' order by ordinal_position;")
         self.ui2.boxSearch1.addItem('')
@@ -268,39 +249,152 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
             if fixed4 == 'vcoil':
                 break
 
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
+        mycursor.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = 'test_vendor' order by ordinal_position;")
+        for variable in mycursor:
+            print(variable)
+            b = str(variable)
+            fixed1 = ''.join(b.split(")"))
+            fixed2 = ''.join(fixed1.split("("))
+            fixed3 = ''.join(fixed2.split("'"))
+            fixed4 = ''.join(fixed3.split(","))
+            print(fixed4)
+            if fixed4 == 'manufacture' or fixed4 == 'manufacture_pn' or fixed4 == 'vendor' or fixed4 == 'vendor_code':
+                self.ui2.boxSearch1.addItem(str(fixed4))
+                self.ui2.boxSearch2.addItem(str(fixed4))
+                self.ui2.boxSearch3.addItem(str(fixed4))
+            global columns_name
+
         self.ui2.editSearch1.returnPressed.connect(self.search_1)
         self.ui2.editSearch2.returnPressed.connect(self.search_2)
         self.ui2.editSearch3.returnPressed.connect(self.search_3)
 
     def connect_to_db(self):
-        mydb = mysql.connector.connect(
-            host=data['mysql']['host'],
-            user=data['mysql']['user'],
-            passwd=data['mysql']['passwd'],
-            database=data['mysql']['db'],
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
         return mycursor
 
     def search_1(self):
+
         global all_component_arrey
-        all_component_arrey = ['test_relay', 'test_resistor']  #ДОБАВИТЬ НОВЫЕ ТАБЛИЦИ СЮДА
+        all_component_arrey = ['test_relay', 'test_resistor', 'test_vendor']  #ДОБАВИТЬ НОВЫЕ ТАБЛИЦИ СЮДА
         print(all_component_arrey)
-        global d
+        global masiv_firs_search
         self.ui2.listFound.clear()
 
-## Connection to DB __________________________________________________________________________________
+## Connection to DB
 
         connection = connect_to_db.getConnectiot()
         mycursor = connection.cursor()
-
-
         c = self.ui2.editSearch1.text()
         parametr = self.ui2.boxSearch1.currentText()
-        d = []
+        masiv_firs_search = []
 
-        for peremennaya in all_component_arrey:
+        if parametr == 'manufacture' or parametr == 'manufacture_pn' or parametr == 'vendor' or parametr == 'vendor_code':
+            peremennaya = 'test_vendor'
+            print(peremennaya)
+            print(parametr)
+            print(c)
+            mycursor.execute("SELECT ektospn FROM {} WHERE {} LIKE '%{}%'".format(peremennaya, parametr, c))
+            for variable in mycursor:
+                b = str(variable)
+                fixed1 = ''.join(b.split(")"))
+                fixed2 = ''.join(fixed1.split("("))
+                fixed3 = ''.join(fixed2.split("'"))
+                fixed4 = ''.join(fixed3.split(","))
+                if fixed4 in masiv_firs_search:
+                    None
+                else:
+                    masiv_firs_search.append(fixed4)
+                    print(masiv_firs_search)
+            for variable in masiv_firs_search:
+                self.ui2.listFound.addItem(variable)
+        else:
+
+            for peremennaya in all_component_arrey:
+                print(peremennaya)
+                print(parametr)
+                print(c)
+                if peremennaya != 'test_vendor':
+                    mycursor.execute("SELECT ektospn FROM {} WHERE {} LIKE '%{}%'".format(peremennaya, parametr, c))
+                    for variable in mycursor:
+                        b = str(variable)
+                        fixed1 = ''.join(b.split(")"))
+                        fixed2 = ''.join(fixed1.split("("))
+                        fixed3 = ''.join(fixed2.split("'"))
+                        fixed4 = ''.join(fixed3.split(","))
+                        masiv_firs_search.append(fixed4)
+
+            for variable in masiv_firs_search:
+                self.ui2.listFound.addItem(variable)
+
+    def search_2(self):
+        self.ui2.listFound.clear()
+
+
+        print(masiv_firs_search)
+        masiv_second_search = []
+
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
+        parametr = self.ui2.boxSearch2.currentText()
+        c = self.ui2.editSearch2.text()
+        if parametr == 'manufacture' or parametr == 'manufacture_pn' or parametr == 'vendor' or parametr == 'vendor_code':
+            peremennaya = 'test_vendor'
+            print(peremennaya)
+            print(parametr)
+            print(c)
+            for some in masiv_firs_search:
+                mycursor.execute("SELECT ektospn FROM {} WHERE {} LIKE '%{}%' AND ektospn = '{}'".format(peremennaya, parametr, c, some))
+                for variable in mycursor:
+                    b = str(variable)
+                    fixed1 = ''.join(b.split(")"))
+                    fixed2 = ''.join(fixed1.split("("))
+                    fixed3 = ''.join(fixed2.split("'"))
+                    fixed4 = ''.join(fixed3.split(","))
+                    if masiv_firs_search not in masiv_firs_search:
+                        masiv_firs_search.append(fixed4)
+                        print(masiv_firs_search)
+                for variable in masiv_firs_search:
+                    self.ui2.listFound.addItem(variable)
+        else:
+
+            for peremennaya in all_component_arrey:
+                print(peremennaya)
+                print(parametr)
+                print(c)
+                if peremennaya != 'test_vendor':
+                    for some in masiv_firs_search:
+                        print(masiv_firs_search)
+                        print(peremennaya, parametr, c)
+                        mycursor.execute("SELECT ektospn FROM {} WHERE {} LIKE '%{}%' AND ektospn = '{}'".format(peremennaya, parametr, c, some))
+                        for variable in mycursor:
+                            print(variable)
+                            b = str(variable)
+                            fixed1 = ''.join(b.split(")"))
+                            fixed2 = ''.join(fixed1.split("("))
+                            fixed3 = ''.join(fixed2.split("'"))
+                            fixed4 = ''.join(fixed3.split(","))
+                            masiv_second_search.append(fixed4)
+
+            for variable in masiv_second_search:
+                self.ui2.listFound.addItem(variable)
+
+    def search_3(self):
+
+        self.ui2.listFound.clear()
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
+        self.ui2.listFound.clear()
+        parametr = self.ui2.boxSearch3.currentText()
+        c = self.ui2.editSearch3.text()
+        if parametr == 'manufacture' or parametr == 'manufacture_pn' or parametr == 'vendor' or parametr == 'vendor_code':
+            peremennaya = 'test_vendor'
+            print(peremennaya)
+            print(parametr)
+            print(c)
             mycursor.execute("SELECT ektospn FROM {} WHERE {} LIKE '%{}%'".format(peremennaya, parametr, c))
             for variable in mycursor:
                 b = str(variable)
@@ -309,109 +403,100 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
                 fixed3 = ''.join(fixed2.split("'"))
                 fixed4 = ''.join(fixed3.split(","))
                 d.append(fixed4)
+                print(d)
+            for variable in d:
+                self.ui2.listFound.addItem(variable)
+        else:
 
-        for variable in d:
-            self.ui2.listFound.addItem(variable)
+            for peremennaya in all_component_arrey:
+                print(peremennaya)
+                print(parametr)
+                print(c)
+                mycursor.execute("SELECT ektospn FROM {} WHERE {} LIKE '%{}%'".format(peremennaya, parametr, c))
+                for variable in mycursor:
+                    b = str(variable)
+                    fixed1 = ''.join(b.split(")"))
+                    fixed2 = ''.join(fixed1.split("("))
+                    fixed3 = ''.join(fixed2.split("'"))
+                    fixed4 = ''.join(fixed3.split(","))
+                    d.append(fixed4)
 
-            # mycursor.execute("SELECT Part_Number FROM {} WHERE {} LIKE '%{}%'".format(table2, search2, c))
-        # for somedata in mycursor:
-        #
-        #     x = str(somedata)
-        #     if somedata == 'Manufacturer' or somedata == 'Man_Part_Number' or somedata == 'Man_Part_Number' or somedata == 'Vendor' or somedata == 'Vendor_Code':
-        #         self.ui2.listFound.addItem(str(x))
-
-    def search_2(self):
-        self.ui2.listFound.clear()
-        e = self.ui2.editSearch2.text()
-        d2 = []
-        parametr2 = self.ui2.boxSearch2.currentText()
-        connection = connect_to_db.getConnectiot()
-        mycursor = connection.cursor()
-        for some in d:
-            mycursor.execute(
-                "SELECT ektospn FROM test_relay WHERE {} LIKE '%{}%' AND ektospn = '{}'".format(parametr2, e, some))
-            for variable2 in mycursor:
-                b = str(variable2)
-                fixed1 = ''.join(b.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed4 = ''.join(fixed3.split(","))
-                d2.append(fixed4)
-        for variable in d2:
-            self.ui2.listFound.addItem(variable)
-
-    def search_3(self):
-
-        self.ui2.listFound.clear()
-        f = self.ui2.editSearch3.text()
-        d3 = []
-        parametr3 = self.ui2.boxSearch3.currentText()
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        print(d)
-        for some in d:
-            mycursor.execute(
-                "SELECT ektospn FROM test_relay WHERE {} LIKE '%{}%' AND ektospn = '{}'".format(parametr3, f, some))
-            for variable3 in mycursor:
-                b = str(variable3)
-                fixed1 = ''.join(b.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed4 = ''.join(fixed3.split(","))
-                d3.append(fixed4)
-        for variable in d3:
-            print(variable)
-            self.ui2.listFound.addItem(variable)
+            for variable in d:
+                self.ui2.listFound.addItem(variable)
 
     def lict(self, item):
         global peremennaya
         masiv = []
+        global masiv_for_edit_data
+        global masiv_for_edit_vendors
+        masiv_for_edit_data = []
+        masiv_for_edit_vendors = []
+        global coount
+        coount = -1
         connection = connect_to_db.getConnectiot()
         mycursor = connection.cursor()
         found_item = item.text()
         for perem in all_component_arrey:
+            print(perem)
+            print(all_component_arrey)
             mycursor.execute("SELECT EXISTS(SELECT ektospn FROM {} WHERE ektospn = '{}')".format(perem, found_item))
+            print(mycursor)
             for some_data in mycursor:
+                print(some_data)
                 if str(some_data) == '(1,)':
                     peremennaya = perem
-        mycursor.execute(
-            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(peremennaya))
-        for variable in mycursor:
-            b = str(variable)
-            fixed1 = ''.join(b.split(")"))
-            fixed2 = ''.join(fixed1.split("("))
-            fixed3 = ''.join(fixed2.split("'"))
-            fixed4 = ''.join(fixed3.split(","))
-            masiv.append(fixed4)
-        self.ui2.tableViewPatameters.setRowCount(len(masiv))
-        global k
-        k = 0
-        print(masiv)
-        for i in masiv:
-            k += 1
-            self.ui2.tableViewPatameters.setItem(k-1, 0, QTableWidgetItem(i))
-        connection = connect_to_db.getConnectiot()
-        mycursor = connection.cursor()
-        global masiv_for_edit_data
-        masiv_for_edit_data = []
-        mycursor.execute("SELECT * FROM {} WHERE ektospn = '{}'".format(peremennaya, found_item))
-        for data12 in mycursor:
-            global coount
-            print(data12)
-            coount = -1
-            for i in data12:
-                i2 = str(i)
-                print(i2)
-                coount += 1
-                masiv_for_edit_data.append(i2)
-                self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i2))
+                    mycursor.execute(
+                        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(peremennaya))
+                    print(peremennaya)
+                    for variable in mycursor:
+                        b = str(variable)
+                        fixed1 = ''.join(b.split(")"))
+                        fixed2 = ''.join(fixed1.split("("))
+                        fixed3 = ''.join(fixed2.split("'"))
+                        fixed4 = ''.join(fixed3.split(","))
+                        # ДОБАВЛЯТЬ ТОЛЬКО УНИКАЛЬНЫЕ ПОЛЯ
+                        if fixed4 not in masiv:
+                            masiv.append(fixed4)
+                            print(masiv)
+                    mycursor.execute(
+                        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dpe' AND TABLE_NAME = '{}' order by ordinal_position;".format(peremennaya))
+                    self.ui2.tableViewPatameters.setRowCount(len(masiv))
+                    global k
+                    k = 0
+                    print(masiv)
+                    for i in masiv:
+                        k += 1
+                        self.ui2.tableViewPatameters.setItem(k-1, 0, QTableWidgetItem(i))
+                    connection = connect_to_db.getConnectiot()
+                    mycursor = connection.cursor()
+                    print(peremennaya)
+                    print(found_item)
+                    if peremennaya == 'test_relay':
+                        mycursor.execute("SELECT * FROM {} WHERE ektospn = '{}'".format(peremennaya, found_item))
+                    elif peremennaya == 'test_vendor':
+                        mycursor.execute("SELECT manufacture, manufacture_pn, vendor, vendor_code FROM {} WHERE ektospn = '{}'".format(peremennaya, found_item))
+                        for data12 in mycursor:
+                            print(data12)
+                            for i in data12:
+                                i2 = str(i)
+                                print(i2)
+                                coount += 1
+                                print(coount)
+                                masiv_for_edit_vendors.append(i2)
+                                self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i2))
+                    else:
+                        None
+                    for data12 in mycursor:
+                        print(data12)
+                        for i in data12:
+                            i2 = str(i)
+                            print(i2)
+                            coount += 1
+                            print(coount)
+                            masiv_for_edit_data.append(i2)
+                            self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i2))
         self.ui2.pushButton_14.clicked.connect(self.edit_value)
+        self.ui2.pushButton_15.clicked.connect(self.review)
 
         # global found_item
         # found_item = item.text()
@@ -451,16 +536,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         #             self.ui2.tableViewPatameters.setItem(coount, 1, QTableWidgetItem(i))
         #
         # self.ui2.pushButton_14.clicked.connect(self.edit_component)
-        # self.ui2.pushButton_15.clicked.connect(self.review_component)
+
 
 
     def add_vendor_to_table(self):
-        if masiv[-1]  == 9:
+        if masiv[-1] == 9:
+            print(masiv[-1])
             self.ui2.groupBox_25.setEnabled(False)
             print("asadssssssssssssssssssssss")
         manuf = self.ui2.lineEdit_5.text()
         manuf_pn = self.ui2.lineEdit_6.text()
         vendor = self.ui2.boxVendor.currentText()
+        print(masiv[-1])
         vendor_code = self.ui2.lineEdit_248.text()
         self.ui2.tableWidget.setRowCount(10)
 
@@ -469,12 +556,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.tableWidget.setItem(masiv[-1], 2, QTableWidgetItem(vendor))
         self.ui2.tableWidget.setItem(masiv[-1], 3, QTableWidgetItem(vendor_code))
 
-        self.ui2.lineEdit_5.clear()
-        self.ui2.lineEdit_6.clear()
-        self.ui2.boxVendor.clearEditText()
-        self.ui2.lineEdit_248.clear()
         masiv.append(int(masiv[-1]) + 1)
-
 
         masiv_new[0].append(manuf)
         masiv_new[1].append(manuf_pn)
@@ -487,8 +569,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         part_type = self.ui2.boxStatus_50.currentText()
         value = self.ui2.lineEdit_251.text()
         description = self.ui2.lineEdit_252.text()
-        schematic_part = self.ui2.comboBox_67.currentText()
-        pcb_footprint = self.ui2.comboBox_70.currentText()
+
+        schematic_part1 = self.ui2.comboBox_67.currentText()
+        schematic_part2 = self.ui2.comboBox_68.currentText()
+        schematic_part3 = self.ui2.comboBox_69.currentText()
+
+        pcb_footprint1 = self.ui2.comboBox_70.currentText()
+        pcb_footprint2 = self.ui2.comboBox_71.currentText()
+        pcb_footprint3 = self.ui2.comboBox_72.currentText()
+        pcb_footprint4 = self.ui2.comboBox_73.currentText()
+        pcb_footprint5 = self.ui2.comboBox_74.currentText()
+
         rohs = self.ui2.boxStatus_53.currentText()
         status = self.ui2.boxStatus_49.currentText()
         datasheet = self.ui2.comboBox_75.currentText()
@@ -513,6 +604,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         vsw_ac = self.ui2.lineEdit_257.text()
         isw_dc = self.ui2.lineEdit_274.text()
         isw_ac = self.ui2.lineEdit_285.text()
+
+        all_pcb_footprint = [pcb_footprint1, pcb_footprint2, pcb_footprint3, pcb_footprint4, pcb_footprint5]
+        masssiv = []
+        for a in all_pcb_footprint:
+            if a != "":
+                masssiv.append(str(a))
+        pcb_footprint_end = ''
+        for h in masssiv:
+            pcb_footprint_end += h + '/'
+        pcb_footprint_end = pcb_footprint_end[:-1]
+        print(pcb_footprint_end)
+
+        all_schematic_part = [schematic_part1, schematic_part2, schematic_part3]
+        masssiv2 = []
+        for a in all_schematic_part:
+            if a != "":
+                masssiv2.append(str(a))
+        schematic_part_end = ''
+        for h in masssiv2:
+            schematic_part_end += h + '/'
+        schematic_part_end = schematic_part_end[:-1]
+        print(schematic_part_end)
+
         cont_form = self.ui2.lineEdit_287.text()
         lxw = self.ui2.lineEdit_239.text()
         connection = connect_to_db.getConnectiot()
@@ -523,159 +637,314 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
               "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
               "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
               "%s, %s, %s, %s, %s, %s, %s)"
-        val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
+        val = (part_num, part_type, value, description, schematic_part_end, pcb_footprint_end,
                rohs, status, datasheet, notes, create_date, rewiew_date, updaye_date, m_type, t_min,
                t_max, project_num, height, automative_st, vcoil, icoil, vsw_dc, vsw_ac, isw_dc, isw_ac, cont_form, lxw)
-        mycursor.execute(sql, val)
 
-
-
-        todell = [0,1,2,3,4,5,6,7,8,9]
+        todell = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         for i in todell:
             print(i)
-            sql1 = "INSERT INTO test_vendor (ektospn, manufacture, manufacture_pn, datasheet, vendor, vendor_code, " \
-                   "create1, revie, update1, notes) VALUES " \
-                  "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            val1 = (part_num, masiv_new[0][i], masiv_new[1][i], datasheet, masiv_new[2][i], masiv_new[3][i], create_date, rewiew_date, updaye_date, notes)
-            mycursor.execute(sql1, val1)
-            if i == len(masiv_new[0])-1:
-                break
-        print(masiv_new)
+            # Добавление данных в БД "test_vendor"
+            print(masiv_new)
+
+            p = self.ui2.tableWidget.text(0, 0)
+            print(p)
 
 
 
+            if manufacure != '' or man_pn != '' or vendor != '' or vendor_code != '':
+                sql1 = "INSERT INTO test_vendor (ektospn, manufacture, manufacture_pn, datasheet, vendor, vendor_code, " \
+                       "create1, reviewed, update1, notes) VALUES " \
+                       "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                val1 = (part_num, masiv_new[0][i], masiv_new[1][i], datasheet, masiv_new[2][i], masiv_new[3][i], create_date,
+                rewiew_date, updaye_date, notes)
+                if i == len(masiv_new[0]) - 1:
+                    break
+            break
 
+        if self.ui2.label_14.isEnabled() == False:
+            try:
+                # Проверка заполненности обязательных полей для заполнения
+                if part_num !='' and value != '' and schematic_part1 != '' and pcb_footprint1 != '' and manufacure != '' and man_pn != '' and vendor != '' and vendor_code != '':
+                    mycursor.execute(sql, val)
+                    self.ui2.label_17.setText(updaye_date)
+                else:
+                    self.ui2.label_error.setText("Fill in all required fields")
 
-        # __________________________________________________________________
-        #
-        # sql = "INSERT INTO ektos_2019_inductor (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
-        #       "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
-        #       "M_Type, Tmin, Tmax, Height, AutomotiveStandard, RmsCurrent, SaturationCurrent, DcresistanceMax, Size) VALUES " \
-        #       "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
-        #       "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
-        #       "%s, %s, %s, %s)"
-        # val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
-        #        rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
-        #        t_max, height, automativ_standart, rms_current, saturation_current, dcresistance_max, siz
+                mycursor.execute(sql1, val1)
+            except Exception:
+                x = str(self.ui2.lineEdit_250.text())
+                mycursor.execute("DELETE FROM test_relay WHERE ektospn = '{}'".format(x))
+                mycursor.execute(sql, val)
+                self.ui2.label_17.setText(updaye_date)
+                if manufacure != '' or man_pn != '' or vendor != '' or vendor_code != '':
+                    mycursor.execute(sql1, val1)
 
-
-
-
+        if self.ui2.label_14.isEnabled() == True:
+            try:
+                if part_num != '' and value != '' and schematic_part1 != '' and pcb_footprint1 != '' and manufacure != '' and man_pn != '' and vendor != '' and vendor_code != '':
+                    mycursor.execute(sql, val)
+                    self.ui2.label_error.setText('Data recorded succssfully')
+                else:
+                    self.ui2.label_error.setText("Fill in all required fields")
+            except Exception:
+                self.ui2.label_error.setText('Duplicate enty for ektospn')
+            try:
+                mycursor.execute(sql1, val1)
+            except Exception:
+                None
+            connection.commit()
 
     def edit_value(self):
+        peremennaya = 'test_relay'
         if peremennaya == 'test_relay':
+            self.clear()
+
             self.ui2.tabWidget.setCurrentIndex(0)
+            print(masiv_for_edit_data)
+            print(masiv_for_edit_vendors)
             self.ui2.lineEdit_250.setText(masiv_for_edit_data[0])
-            self.ui2.boxStatus_50.setCurrentText(masiv_for_edit_data[1])
+            part_type = self.ui2.boxStatus_50.setCurrentText(masiv_for_edit_data[1])
             self.ui2.lineEdit_251.setText(masiv_for_edit_data[2])
-            self.ui2.lineEdit_252.setText(masiv_for_edit_data[3])
-            self.ui2.comboBox_67.setItemText(0, masiv_for_edit_data[4])
-            self.ui2.comboBox_70.setItemText(0, masiv_for_edit_data[5])
-            self.ui2.boxStatus_53.setCurrentText(masiv_for_edit_data[6])
-            self.ui2.boxStatus_49.setCurrentText(masiv_for_edit_data[7])
-            self.ui2.comboBox_75.setItemText(0, masiv_for_edit_data[8])
-            self.ui2.lineEdit_258.setText(masiv_for_edit_data[9])
-            self.ui2.label_14.setText(masiv_for_edit_data[10])
-            self.ui2.label_19.setText(masiv_for_edit_data[11])
-            self.ui2.label_17.setText(masiv_for_edit_data[12])
-            self.ui2.boxStatus_35.setCurrentText(masiv_for_edit_data[13])
-            self.ui2.lineEdit_218.setText(masiv_for_edit_data[14])
-            self.ui2.lineEdit_232.setText(masiv_for_edit_data[15])
-            self.ui2.lineEdit_259.setText(masiv_for_edit_data[16])
-            self.ui2.lineEdit_236.setText(masiv_for_edit_data[17])
-            self.ui2.boxStatus_54.setCurrentText(masiv_for_edit_data[18])
+            description = self.ui2.lineEdit_252.setText(masiv_for_edit_data[3])
+            x = masiv_for_edit_data[4]
+            print(masiv_for_edit_data[4])
+            try:
+                self.ui2.comboBox_67.setItemText(0, x.split("/")[0])
+                self.ui2.comboBox_68.setItemText(0, x.split("/")[1])
+                self.ui2.comboBox_69.setItemText(0, x.split("/")[2])
+            except Exception:
+                None
+            print(masiv_for_edit_data[5])
 
-            self.ui2.lineEdit_254.setText(masiv_for_edit_data[19])
-            self.ui2.lineEdit_255.setText(masiv_for_edit_data[20])
-            self.ui2.lineEdit_256.setText(masiv_for_edit_data[21])
-            self.ui2.lineEdit_257.setText(masiv_for_edit_data[22])
-            self.ui2.lineEdit_274.setText(masiv_for_edit_data[23])
-            self.ui2.lineEdit_285.setText(masiv_for_edit_data[24])
-            self.ui2.lineEdit_287.setText(masiv_for_edit_data[25])
-            self.ui2.lineEdit_239.setText(masiv_for_edit_data[26])
+            y = masiv_for_edit_data[5]
+            print(masiv_for_edit_data[5])
+            try:
+                self.ui2.comboBox_70.setItemText(0, y.split("/")[0])
+                self.ui2.comboBox_71.setItemText(0, y.split("/")[1])
+                self.ui2.comboBox_72.setItemText(0, y.split("/")[2])
+                self.ui2.comboBox_73.setItemText(0, y.split("/")[3])
+                self.ui2.comboBox_74.setItemText(0, y.split("/")[4])
+            except Exception:
+                None
 
-        # self.ui2.tabWidget.setCurrentIndex(0)
-        # a = strftime("%Y%m%d", gmtime())  # дата и время
-        # update_log = a+'('+log+')'
-        # self.ui2.label_22.setText(str(update_log))
-        # self.ui2.label_18.setEnabled(False)
-        # mydb = mysql.connector.connect(
-        #     host="mysql.ektos.net",
-        #     user="dpe",
-        #     passwd="dpe",
-        #     database="dpe",
-        #     charset='utf8',
-        # )
-        # mycursor = mydb.cursor()
-        # a = 'Part_Number'
-        # b = table1
-        # c = found_item
-        # fixed1 = ''.join(c.split(")"))
-        # fixed2 = ''.join(fixed1.split("("))
-        # fixed3 = ''.join(fixed2.split("'"))
-        # fixed3 = ''.join(fixed3.split(","))
-        # mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-        # counter = -1
-        # for data12 in mycursor:
-        #     b = data12
-        #     for i in data12:
-        #         counter += 1
-        # self.ui2.lineEdit_1.setText(b[0])
-        # self.ui2.lineEdit_2.setText(b[1])
-        # self.ui2.lineEdit_3.setText(b[2])
-        # self.ui2.lineEdit_4.setText(b[3])
-        # self.ui2.lineEdit_5.setText(b[4])
-        # self.ui2.lineEdit_6.setText(b[5])
-        # self.ui2.boxStatus_31.setCurrentText(b[6])
-        # self.ui2.boxStatus.setCurrentText(b[7])
-        # self.ui2.lineEdit_9.setText(b[8])
-        # self.ui2.lineEdit_10.setText(b[9])
-        # self.ui2.lineEdit_11.setText(b[10])
-        # self.ui2.lineEdit_12.setText(b[11])
-        # self.ui2.lineEdit_13.setText(b[12])
-        # self.ui2.lineEdit_14.setText(b[13])
-        # self.ui2.lineEdit_15.setText(str(update_log))
-        # self.ui2.lineEdit_15.setEnabled(False)
-        # self.ui2.boxStatus_32.setCurrentText(b[15])
-        # self.ui2.lineEdit_33.setText(b[16])
-        # self.ui2.lineEdit_34.setText(b[17])
-        # self.ui2.lineEdit_35.setText(b[18])
-        # self.ui2.lineEdit_36.setText(b[19])
-        # self.ui2.lineEdit_37.setText(b[20])
-        # self.ui2.lineEdit_38.setText(b[21])
-        # self.ui2.lineEdit_39.setText(b[22])
-        # self.ui2.lineEdit_40.setText(b[23])
-        # self.ui2.lineEdit_41.setText(b[24])
-        # self.ui2.lineEdit_42.setText(b[25])
-        # self.ui2.lineEdit_43.setText(b[26])
-        # self.ui2.lineEdit_44.setText(b[27])
-        # self.ui2.boxStatus_28.setCurrentText(b[28])
-        # self.ui2.boxStatus_29.setCurrentText(b[29])
-        # self.ui2.lineEdit_47.setText(b[30])
-        # self.ui2.lineEdit_48.setText(b[31])
-        # b = table2
-        # mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-        # counter = -1
-        # for data12 in mycursor:
-        #     b = data12
-        #     for i in data12:
-        #         counter += 1
-        # self.ui2.lineEdit_58.setText(b[4])  # vendor
-        # self.ui2.lineEdit_64.setText(b[5])  # vendor code
-        # self.ui2.lineEdit_45.setText(b[3])  # man part number
-        # self.ui2.lineEdit_46.setText(b[2])  # manufacture
-        #
-        # self.ui2.lineEdit_13.setEnabled(False)
-        # self.ui2.pushButton.clicked.connect(self.relayadd)
+            rohs = self.ui2.boxStatus_53.setCurrentText(masiv_for_edit_data[6])
+            status = self.ui2.boxStatus_49.setCurrentText(masiv_for_edit_data[7])
+            datasheet = self.ui2.comboBox_75.setItemText(0, masiv_for_edit_data[8])
+            notes = self.ui2.lineEdit_258.setText(masiv_for_edit_data[9])
+            create_date = self.ui2.label_14.setText(masiv_for_edit_data[10])
+            rewiew_date = self.ui2.label_19.setText(masiv_for_edit_data[11])
+            updaye_date = self.ui2.label_17.setText(masiv_for_edit_data[12])
+            m_type = self.ui2.boxStatus_35.setCurrentText(masiv_for_edit_data[13])
+            t_min = self.ui2.lineEdit_218.setText(masiv_for_edit_data[14])
+            t_max = self.ui2.lineEdit_232.setText(masiv_for_edit_data[15])
+            project_num = self.ui2.lineEdit_259.setText(masiv_for_edit_data[16])
+            height = self.ui2.lineEdit_236.setText(masiv_for_edit_data[17])
+            automative_st = self.ui2.boxStatus_54.setCurrentText(masiv_for_edit_data[18])
+
+            vcoil = self.ui2.lineEdit_254.setText(masiv_for_edit_data[19])
+            icoil = self.ui2.lineEdit_255.setText(masiv_for_edit_data[20])
+            vsw_dc = self.ui2.lineEdit_256.setText(masiv_for_edit_data[21])
+            vsw_ac = self.ui2.lineEdit_257.setText(masiv_for_edit_data[22])
+            isw_dc = self.ui2.lineEdit_274.setText(masiv_for_edit_data[23])
+            isw_ac = self.ui2.lineEdit_285.setText(masiv_for_edit_data[24])
+            cont_form = self.ui2.lineEdit_287.setText(masiv_for_edit_data[25])
+            lxw = self.ui2.lineEdit_239.setText(masiv_for_edit_data[26])
+            self.ui2.tableWidget.setRowCount(5)
+            try:
+                self.ui2.lineEdit_5.setText(masiv_for_edit_vendors[0])
+                self.ui2.lineEdit_6.setText(masiv_for_edit_vendors[1])
+                self.ui2.boxVendor.setCurrentText(masiv_for_edit_vendors[2])
+                self.ui2.lineEdit_248.setText(masiv_for_edit_vendors[3])
+            except Exception:
+                None
+            if len(masiv_for_edit_vendors) == 4:
+                manufacture = self.ui2.lineEdit_5.setText(masiv_for_edit_data[1])
+                man_pn = self.ui2.lineEdit_6.setText(masiv_for_edit_data[2])
+                vendor = self.ui2.boxVendor.setCurrentText(masiv_for_edit_data[3])
+                vendor_code = self.ui2.lineEdit_248.setText(masiv_for_edit_data[4])
+            elif len(masiv_for_edit_vendors) == 8:
+                self.ui2.tableWidget.setRowCount(4)
+                self.ui2.tableWidget.setItem(0, 0, QTableWidgetItem(masiv_for_edit_vendors[0]))
+                self.ui2.tableWidget.setItem(0, 1, QTableWidgetItem(masiv_for_edit_vendors[1]))
+                self.ui2.tableWidget.setItem(0, 2, QTableWidgetItem(masiv_for_edit_vendors[2]))
+                self.ui2.tableWidget.setItem(0, 3, QTableWidgetItem(masiv_for_edit_vendors[3]))
+                self.ui2.tableWidget.setItem(1, 0, QTableWidgetItem(masiv_for_edit_vendors[4]))
+                self.ui2.tableWidget.setItem(1, 1, QTableWidgetItem(masiv_for_edit_vendors[5]))
+                self.ui2.tableWidget.setItem(1, 2, QTableWidgetItem(masiv_for_edit_vendors[6]))
+                self.ui2.tableWidget.setItem(1, 3, QTableWidgetItem(masiv_for_edit_vendors[7]))
+            elif len(masiv_for_edit_vendors) == 12:
+                self.ui2.tableWidget.setItem(0, 0, QTableWidgetItem(masiv_for_edit_vendors[0]))
+                self.ui2.tableWidget.setItem(0, 1, QTableWidgetItem(masiv_for_edit_vendors[1]))
+                self.ui2.tableWidget.setItem(0, 2, QTableWidgetItem(masiv_for_edit_vendors[2]))
+                self.ui2.tableWidget.setItem(0, 3, QTableWidgetItem(masiv_for_edit_vendors[3]))
+                self.ui2.tableWidget.setItem(1, 0, QTableWidgetItem(masiv_for_edit_vendors[4]))
+                self.ui2.tableWidget.setItem(1, 1, QTableWidgetItem(masiv_for_edit_vendors[5]))
+                self.ui2.tableWidget.setItem(1, 2, QTableWidgetItem(masiv_for_edit_vendors[6]))
+                self.ui2.tableWidget.setItem(1, 3, QTableWidgetItem(masiv_for_edit_vendors[7]))
+                self.ui2.tableWidget.setItem(2, 0, QTableWidgetItem(masiv_for_edit_vendors[8]))
+                self.ui2.tableWidget.setItem(2, 1, QTableWidgetItem(masiv_for_edit_vendors[9]))
+                self.ui2.tableWidget.setItem(2, 2, QTableWidgetItem(masiv_for_edit_vendors[10]))
+                self.ui2.tableWidget.setItem(2, 3, QTableWidgetItem(masiv_for_edit_vendors[11]))
+            elif len(masiv_for_edit_vendors) == 16:
+                self.ui2.tableWidget.setItem(0, 0, QTableWidgetItem(masiv_for_edit_vendors[0]))
+                self.ui2.tableWidget.setItem(0, 1, QTableWidgetItem(masiv_for_edit_vendors[1]))
+                self.ui2.tableWidget.setItem(0, 2, QTableWidgetItem(masiv_for_edit_vendors[2]))
+                self.ui2.tableWidget.setItem(0, 3, QTableWidgetItem(masiv_for_edit_vendors[3]))
+                self.ui2.tableWidget.setItem(1, 0, QTableWidgetItem(masiv_for_edit_vendors[4]))
+                self.ui2.tableWidget.setItem(1, 1, QTableWidgetItem(masiv_for_edit_vendors[5]))
+                self.ui2.tableWidget.setItem(1, 2, QTableWidgetItem(masiv_for_edit_vendors[6]))
+                self.ui2.tableWidget.setItem(1, 3, QTableWidgetItem(masiv_for_edit_vendors[7]))
+                self.ui2.tableWidget.setItem(2, 0, QTableWidgetItem(masiv_for_edit_vendors[8]))
+                self.ui2.tableWidget.setItem(2, 1, QTableWidgetItem(masiv_for_edit_vendors[9]))
+                self.ui2.tableWidget.setItem(2, 2, QTableWidgetItem(masiv_for_edit_vendors[10]))
+                self.ui2.tableWidget.setItem(2, 3, QTableWidgetItem(masiv_for_edit_vendors[11]))
+                self.ui2.tableWidget.setItem(3, 0, QTableWidgetItem(masiv_for_edit_vendors[12]))
+                self.ui2.tableWidget.setItem(3, 1, QTableWidgetItem(masiv_for_edit_vendors[13]))
+                self.ui2.tableWidget.setItem(3, 2, QTableWidgetItem(masiv_for_edit_vendors[14]))
+                self.ui2.tableWidget.setItem(3, 3, QTableWidgetItem(masiv_for_edit_vendors[15]))
+
+            part_num = self.ui2.lineEdit_250.text()
+            part_type = self.ui2.boxStatus_50.currentText()
+            value = self.ui2.lineEdit_251.text()
+
+
+            self.ui2.label_14.setEnabled(False)
+            print(part_num, value)
+
+    def review(self):
+        if peremennaya == 'test_relay':
+            self.clear()
+            self.ui2.tabWidget.setCurrentIndex(0)
+
+            self.ui2.lineEdit_250.setText(masiv_for_edit_data[0])
+            self.ui2.lineEdit_250.setEnabled(False)
+            part_type = self.ui2.boxStatus_50.setCurrentText(masiv_for_edit_data[1])
+            self.ui2.boxStatus_50.setEnabled(False)
+            self.ui2.lineEdit_251.setText(masiv_for_edit_data[2])
+            self.ui2.lineEdit_251.setEnabled(False)
+            description = self.ui2.lineEdit_252.setText(masiv_for_edit_data[3])
+            self.ui2.lineEdit_252.setEnabled(False)
+            x = masiv_for_edit_data[4]
+            print(masiv_for_edit_data[4])
+            self.ui2.comboBox_67.setEnabled(False)
+            self.ui2.comboBox_67.setEnabled(False)
+            self.ui2.comboBox_68.setEnabled(False)
+            self.ui2.comboBox_69.setEnabled(False)
+            try:
+                self.ui2.comboBox_67.setItemText(0, x.split("/")[0])
+                self.ui2.comboBox_68.setItemText(0, x.split("/")[1])
+                self.ui2.comboBox_69.setItemText(0, x.split("/")[2])
+            except Exception:
+                None
+            print(masiv_for_edit_data[5])
+
+            y = masiv_for_edit_data[5]
+            print(masiv_for_edit_data[5])
+            self.ui2.comboBox_70.setEnabled(False)
+            self.ui2.comboBox_71.setEnabled(False)
+            self.ui2.comboBox_72.setEnabled(False)
+            self.ui2.comboBox_73.setEnabled(False)
+            self.ui2.comboBox_74.setEnabled(False)
+            try:
+                self.ui2.comboBox_70.setItemText(0, y.split("/")[0])
+                self.ui2.comboBox_71.setItemText(0, y.split("/")[1])
+                self.ui2.comboBox_72.setItemText(0, y.split("/")[2])
+                self.ui2.comboBox_73.setItemText(0, y.split("/")[3])
+                self.ui2.comboBox_74.setItemText(0, y.split("/")[4])
+            except Exception:
+                None
+
+            self.ui2.comboBox_75.setEnabled(False)
+            self.ui2.pushButton_28.setEnabled(False)
+            self.ui2.pushButton_26.setEnabled(False)
+            self.ui2.pushButton_27.setEnabled(False)
+            self.ui2.pushButton.setEnabled(False)
+            self.ui2.pushButton_16.setEnabled(True)
+            self.ui2.groupBox_5.setEnabled(False)
+            self.ui2.groupBox_25.setEnabled(False)
+            self.ui2.groupBox_3.setEnabled(False)
+
+            print(update_log)
+
+            rohs = self.ui2.boxStatus_53.setCurrentText(masiv_for_edit_data[6])
+            status = self.ui2.boxStatus_49.setCurrentText(masiv_for_edit_data[7])
+            datasheet = self.ui2.comboBox_75.setItemText(0, masiv_for_edit_data[8])
+            notes = self.ui2.lineEdit_258.setText(masiv_for_edit_data[9])
+            create_date = self.ui2.label_14.setText(masiv_for_edit_data[10])
+            rewiew_date = self.ui2.label_19.setText(masiv_for_edit_data[11])
+            updaye_date = self.ui2.label_17.setText(masiv_for_edit_data[12])
+            m_type = self.ui2.boxStatus_35.setCurrentText(masiv_for_edit_data[13])
+            t_min = self.ui2.lineEdit_218.setText(masiv_for_edit_data[14])
+            t_max = self.ui2.lineEdit_232.setText(masiv_for_edit_data[15])
+            project_num = self.ui2.lineEdit_259.setText(masiv_for_edit_data[16])
+            height = self.ui2.lineEdit_236.setText(masiv_for_edit_data[17])
+            automative_st = self.ui2.boxStatus_54.setCurrentText(masiv_for_edit_data[18])
+
+            vcoil = self.ui2.lineEdit_254.setText(masiv_for_edit_data[19])
+            icoil = self.ui2.lineEdit_255.setText(masiv_for_edit_data[20])
+            vsw_dc = self.ui2.lineEdit_256.setText(masiv_for_edit_data[21])
+            vsw_ac = self.ui2.lineEdit_257.setText(masiv_for_edit_data[22])
+            isw_dc = self.ui2.lineEdit_274.setText(masiv_for_edit_data[23])
+            isw_ac = self.ui2.lineEdit_285.setText(masiv_for_edit_data[24])
+            cont_form = self.ui2.lineEdit_287.setText(masiv_for_edit_data[25])
+            lxw = self.ui2.lineEdit_239.setText(masiv_for_edit_data[26])
+
+            part_num = self.ui2.lineEdit_250.text()
+            part_type = self.ui2.boxStatus_50.currentText()
+            value = self.ui2.lineEdit_251.text()
+            self.ui2.label_14.setEnabled(False)
+            self.ui2.label_19.setText(update_log)
+
+            self.ui2.pushButton_16.clicked.connect(self.edit_relay_after_review)
+
+    def edit_relay_after_review(self):
+        self.ui2.comboBox_75.setEnabled(True)
+        self.ui2.pushButton_28.setEnabled(True)
+        self.ui2.pushButton_26.setEnabled(True)
+        self.ui2.pushButton_27.setEnabled(True)
+        self.ui2.pushButton.setEnabled(True)
+        self.ui2.pushButton_16.setEnabled(True)
+        self.ui2.groupBox_5.setEnabled(True)
+        self.ui2.groupBox_25.setEnabled(True)
+        self.ui2.groupBox_3.setEnabled(True)
+        self.ui2.comboBox_70.setEnabled(True)
+        self.ui2.comboBox_71.setEnabled(True)
+        self.ui2.comboBox_72.setEnabled(True)
+        self.ui2.comboBox_73.setEnabled(True)
+        self.ui2.comboBox_74.setEnabled(True)
+        self.ui2.lineEdit_250.setEnabled(True)
+        self.ui2.boxStatus_50.setEnabled(True)
+        self.ui2.lineEdit_251.setEnabled(True)
+        self.ui2.lineEdit_252.setEnabled(True)
+        self.ui2.comboBox_67.setEnabled(True)
+        self.ui2.comboBox_67.setEnabled(True)
+        self.ui2.comboBox_68.setEnabled(True)
+        self.ui2.comboBox_69.setEnabled(True)
+        self.ui2.label_19.setText('')
+
+        connection = connect_to_db.getConnectiot()
+        mycursor = connection.cursor()
+        sql = "INSERT INTO test_relay (ektospn, part_type, value, description, schematic_part1, pcb_footprint1, rohs," \
+              "status, datasheet, notes, create1, reviewed, update1, m_type, tmin, tmax, project_number, height, " \
+              "automotivest, vcoil, icoil, vsw_dc, vsw_ac, isw_dc, isw_ac, contact_form, lxw) VALUES " \
+              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+              "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+              "%s, %s, %s, %s, %s, %s, %s)"
+        val = (part_num, part_type, value, description, schematic_part_end, pcb_footprint_end,
+               rohs, status, datasheet, notes, create_date, rewiew_date, updaye_date, m_type, t_min,
+               t_max, project_num, height, automative_st, vcoil, icoil, vsw_dc, vsw_ac, isw_dc, isw_ac, cont_form, lxw)
+        mycursor.execute("DELETE FROM ektos_2019_other WHERE Part_Number = '{}'".format(x))
+
+
 
     def clear(self):
-        self.ui2.label_2.clear()
         self.ui2.lineEdit_250.clear()
         self.ui2.lineEdit_251.clear()
         self.ui2.lineEdit_5.clear()
         self.ui2.lineEdit_6.clear()
         self.ui2.lineEdit_252.clear()
-        self.ui2.comboBox_75.clear()
+        self.ui2.comboBox_75.setItemText(0, '')
         self.ui2.label_17.clear()
         self.ui2.label_19.clear()
         self.ui2.lineEdit_254.clear()
@@ -690,13 +959,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         self.ui2.lineEdit_236.clear()
         self.ui2.lineEdit_259.clear()
         self.ui2.lineEdit_239.clear()
-        self.ui2.lineEdit_265.clear()
+
         self.ui2.lineEdit_258.clear()
         self.ui2.boxVendor.clearEditText()
         self.ui2.lineEdit_248.clear()
-        self.ui2.boxVendor_2.clearEditText()
-        self.ui2.lineEdit_259.clear()
+
         self.ui2.tableWidget.clearContents()
+
+        self.ui2.comboBox_67.setItemText(0, '')
+        self.ui2.comboBox_68.setItemText(0, '')
+        self.ui2.comboBox_69.setItemText(0, '')
+
+        self.ui2.comboBox_70.setItemText(0, '')
+        self.ui2.comboBox_71.setItemText(0, '')
+        self.ui2.comboBox_72.setItemText(0, '')
+        self.ui2.comboBox_73.setItemText(0, '')
+        self.ui2.comboBox_74.setItemText(0, '')
 
     def datasheet_view(self):
         v = self.ui2.comboBox_75.currentText()
@@ -1182,459 +1460,459 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
         for i in range(0, 269):
             edit_masiv[i].clear()
 
-    def inductor(self):
-        a = strftime("%Y%m%d", gmtime())
-        global update_log
-        update_log = a + '(' + log + ')'
-        self.ui2.lineEdit_151.setText(update_log)
-        part_num = self.ui2.lineEdit_146.text()
-        part_type = self.ui2.lineEdit_140.text()
-        value = self.ui2.lineEdit_141.text()
-        description = self.ui2.lineEdit_142.text()
-        schematic_part = self.ui2.lineEdit_143.text()
-        pcb_footprint = self.ui2.lineEdit_144.text()
-        status = self.ui2.boxStatus_6.currentText()
-        rohs = self.ui2.boxStatus_19.currentText()
-        datasheet = self.ui2.lineEdit_147.text()
-        image = self.ui2.lineEdit_148.text()
-        notes = self.ui2.lineEdit_149.text()
-        part_class = self.ui2.lineEdit_150.text()
-        create_date = self.ui2.lineEdit_151.text()
-        rewiew_date = self.ui2.lineEdit_152.text()
-        updaye_date = self.ui2.lineEdit_153.text()
-        m_type = self.ui2.boxStatus_20.currentText()
-        t_min = self.ui2.lineEdit_155.text()
-        t_max = self.ui2.lineEdit_156.text()
-        height = self.ui2.lineEdit_157.text()
-        automativ_standart = self.ui2.lineEdit_158.text()
-        rms_current = self.ui2.lineEdit_159.text()
-        saturation_current = self.ui2.lineEdit_160.text()
-        dcresistance_max = self.ui2.lineEdit_161.text()
-        size = self.ui2.lineEdit_162.text()
-        vendor = self.ui2.lineEdit_163.text()
-        vendor_code = self.ui2.lineEdit_169.text()
-        manufacturer = self.ui2.lineEdit_222.text()
-        man_part_number = self.ui2.lineEdit_223.text()
-
-        create_user = myapp.logpas[0]
-        if self.ui2.label_208.setEnabled == True:
-            self.ui2.label_208.setText(create_user)
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        sql = "INSERT INTO ektos_2019_inductor (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
-              "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
-              "M_Type, Tmin, Tmax, Height, AutomotiveStandard, RmsCurrent, SaturationCurrent, DcresistanceMax, Size) VALUES " \
-              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
-              "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
-              "%s, %s, %s, %s)"
-        val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
-               rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
-               t_max, height, automativ_standart, rms_current, saturation_current, dcresistance_max, size)
-        sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
-                     "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
-
-        if self.ui2.lineEdit_151.isEnabled() == False:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_264.setText("Data recorded succssfully")
-            except Exception:
-                x = str(self.ui2.lineEdit_146.text())
-                mycursor.execute("DELETE FROM ektos_2019_diode WHERE Part_Number = '{}'".format(x))
-                mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_264.setText("Data recorded succssfully")
-            mydb.commit()
-            self.clear_lines()
-
-        if self.ui2.lineEdit_151.isEnabled() == True:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_264.setText("Data recorded succssfully")
-                self.clear_lines()
-            except Exception:
-                self.ui2.label_264.setText("Duplicate entry for Part Number unique value")
-            mydb.commit()
-        self.ui2.groupBox_16.setEnabled(True)
-        self.ui2.groupBox_17.setEnabled(True)
-
-    def diode(self):
-        a = strftime("%Y%m%d", gmtime())
-        global update_log
-        update_log = a + '(' + log + ')'
-        self.ui2.lineEdit_126.setText(update_log)
-        part_num = self.ui2.lineEdit_121.text()
-        part_type = self.ui2.lineEdit_115.text()
-        value = self.ui2.lineEdit_116.text()
-        description = self.ui2.lineEdit_117.text()
-        schematic_part = self.ui2.lineEdit_118.text()
-        pcb_footprint = self.ui2.lineEdit_119.text()
-        status = self.ui2.boxStatus_4.currentText()
-        rohs = self.ui2.boxStatus_11.currentText()
-        datasheet = self.ui2.lineEdit_122.text()
-        image = self.ui2.lineEdit_123.text()
-        notes = self.ui2.lineEdit_124.text()
-        part_class = self.ui2.lineEdit_125.text()
-        create_date = self.ui2.lineEdit_126.text()
-        rewiew_date = self.ui2.lineEdit_127.text()
-        updaye_date = self.ui2.lineEdit_128.text()
-        m_type = self.ui2.boxStatus_12.currentText()
-        t_min = self.ui2.lineEdit_130.text()
-        t_max = self.ui2.lineEdit_131.text()
-        height = self.ui2.lineEdit_132.text()
-        automativ_standart = self.ui2.lineEdit_133.text()
-        reverse_vrrm_max = self.ui2.lineEdit_134.text()
-        forward_current = self.ui2.lineEdit_135.text()
-        forward_voltage_vf = self.ui2.lineEdit_136.text()
-        reverse_recovery_time_max = self.ui2.lineEdit_137.text()
-        forward_surge_current_max = self.ui2.lineEdit_138.text()
-        vendor = self.ui2.lineEdit_139.text()
-        vendor_code = self.ui2.lineEdit_145.text()
-        manufacturer = self.ui2.lineEdit_220.text()
-        man_part_number = self.ui2.lineEdit_221.text()
-
-        create_user = myapp.logpas[0]
-        if self.ui2.label_171.setEnabled == True:
-            self.ui2.label_171.setText(create_user)
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        sql = "INSERT INTO ektos_2019_diode (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
-              "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
-              "M_Type, Tmin, Tmax, Height, AutomotiveStandard, ReverseVrrmMax, ForwardCurrent, " \
-              "ForwardVoltageVf, ReverseRecoveryTimeMax, ForwardSurgeCurrentMax) VALUES " \
-              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
-              "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
-              "%s, %s, %s, %s, %s)"
-        val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
-               rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
-               t_max, height, automativ_standart, reverse_vrrm_max, forward_current, forward_voltage_vf,
-               reverse_recovery_time_max, forward_surge_current_max)
-        sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
-                     "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
-
-        if self.ui2.lineEdit_126.isEnabled() == False:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_181.setText("Data recorded succssfully")
-            except Exception:
-                x = str(self.ui2.lineEdit_121.text())
-                mycursor.execute("DELETE FROM ektos_2019_diode WHERE Part_Number = '{}'".format(x))
-                mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_181.setText("Data recorded succssfully")
-            mydb.commit()
-            self.clear_lines()
-
-        if self.ui2.lineEdit_126.isEnabled() == True:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_181.setText("Data recorded succssfully")
-                self.clear_lines()
-            except Exception:
-                self.ui2.label_181.setText("Duplicate entry for Part Number unique value")
-            mydb.commit()
-        self.ui2.groupBox_13.setEnabled(True)
-        self.ui2.groupBox_14.setEnabled(True)
-
-
-    def connector(self):
-        a = strftime("%Y%m%d", gmtime())
-        global update_log
-        update_log = a + '(' + log + ')'
-        self.ui2.lineEdit_97.setText(update_log)
-        part_num = self.ui2.lineEdit_92.text()
-        part_type = self.ui2.lineEdit_86.text()
-        value = self.ui2.lineEdit_87.text()
-        description = self.ui2.lineEdit_88.text()
-        schematic_part = self.ui2.lineEdit_89.text()
-        pcb_footprint = self.ui2.lineEdit_90.text()
-        status = self.ui2.boxStatus_4.currentText()
-        rohs = self.ui2.boxStatus_11.currentText()
-        datasheet = self.ui2.lineEdit_93.text()
-        image = self.ui2.lineEdit_94.text()
-        notes = self.ui2.lineEdit_95.text()
-        part_class = self.ui2.lineEdit_96.text()
-        create_date = self.ui2.lineEdit_97.text()
-        rewiew_date = self.ui2.lineEdit_98.text()
-        updaye_date = self.ui2.lineEdit_99.text()
-        m_type = self.ui2.boxStatus_12.currentText()
-        t_min = self.ui2.lineEdit_101.text()
-        t_max = self.ui2.lineEdit_102.text()
-        height = self.ui2.lineEdit_103.text()
-        automativ_standart = self.ui2.lineEdit_104.text()
-        pitch_spacing = self.ui2.lineEdit_105.text()
-        contacts_qty = self.ui2.lineEdit_106.text()
-        gender = self.ui2.lineEdit_107.text()
-        rows_qty = self.ui2.lineEdit_108.text()
-        max_voltage_dc = self.ui2.lineEdit_109.text()
-        max_voltage_ac = self.ui2.lineEdit_110.text()
-        max_current_dc = self.ui2.lineEdit_111.text()
-        max_current_ac = self.ui2.lineEdit_112.text()
-        frequency_max = self.ui2.lineEdit_113.text()
-        vendor = self.ui2.lineEdit_114.text()
-        vendor_code = self.ui2.lineEdit_120.text()
-        manufacturer = self.ui2.lineEdit_219.text()
-        man_part_number = self.ui2.lineEdit_210.text()
-
-        create_user = myapp.logpas[0]
-        if self.ui2.label_136.setEnabled == True:
-            self.ui2.label_136.setText(create_user)
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        sql = "INSERT INTO ektos_2019_connector (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
-              "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
-              "M_Type, Tmin, Tmax, Height, AutomotiveStandard, PitchSpacing, ContactsQty, Gender, RowsQty, " \
-              "MaxVoltageDC, MaxVoltageAC, MaxCurrentDC, MaxCurrentAC, FrequencyMax) VALUES " \
-              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
-              "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
-              "%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
-               rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
-               t_max, height, automativ_standart, pitch_spacing, contacts_qty, gender, rows_qty, max_voltage_dc,
-               max_voltage_ac, max_current_dc, max_current_ac, frequency_max)
-        sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
-                     "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
-
-        if self.ui2.lineEdit_97.isEnabled() == False:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_180.setText("Data recorded succssfully")
-            except Exception:
-                x = str(self.ui2.lineEdit_92.text())
-                mycursor.execute("DELETE FROM ektos_2019_connector WHERE Part_Number = '{}'".format(x))
-                mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_180.setText("Data recorded succssfully")
-            mydb.commit()
-            self.clear_lines()
-
-        if self.ui2.lineEdit_97.isEnabled() == True:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_180.setText("Data recorded succssfully")
-                self.clear_lines()
-            except Exception:
-                self.ui2.label_180.setText("Duplicate entry for Part Number unique value")
-            mydb.commit()
-        self.ui2.groupBox_11.setEnabled(True)
-        self.ui2.groupBox_10.setEnabled(True)
-        self.ui2.groupBox_26.setEnabled(True)
-
-
-    def transistor(self):
-        a = strftime("%Y%m%d", gmtime())
-        global update_log
-        update_log = a + '(' + log + ')'
-        self.ui2.lineEdit_70.setText(update_log)
-        part_num = self.ui2.lineEdit_65.text()
-        part_type = self.ui2.lineEdit_59.text()
-        value = self.ui2.lineEdit_60.text()
-        description = self.ui2.lineEdit_61.text()
-        schematic_part = self.ui2.lineEdit_62.text()
-        pcb_footprint = self.ui2.lineEdit_63.text()
-        status = self.ui2.boxStatus_3.currentText()
-        rohs = self.ui2.boxStatus_14.currentText()
-        datasheet = self.ui2.lineEdit_66.text()
-        image = self.ui2.lineEdit_67.text()
-        notes = self.ui2.lineEdit_68.text()
-        part_class = self.ui2.lineEdit_69.text()
-        create_date = self.ui2.lineEdit_70.text()
-        rewiew_date = self.ui2.lineEdit_71.text()
-        updaye_date = self.ui2.lineEdit_72.text()
-        m_type = self.ui2.boxStatus_13.currentText()
-        t_min = self.ui2.lineEdit_74.text()
-        t_max = self.ui2.lineEdit_75.text()
-        height = self.ui2.lineEdit_76.text()
-        automativ_standart = self.ui2.lineEdit_77.text()
-        power = self.ui2.lineEdit_78.text()
-        collector_drain_current = self.ui2.lineEdit_79.text()
-        vceo_vgs = self.ui2.lineEdit_80.text()
-        fmax = self.ui2.lineEdit_81.text()
-        rdson = self.ui2.lineEdit_82.text()
-        thresholdvgs = self.ui2.lineEdit_83.text()
-        polarity = self.ui2.lineEdit_91.text()
-        vendor = self.ui2.lineEdit_84.text()
-        vendor_code = self.ui2.lineEdit_100.text()
-        manufacturer = self.ui2.lineEdit_154.text()
-        man_part_number = self.ui2.lineEdit_129.text()
-
-        create_user = myapp.logpas[0]
-        if self.ui2.label_103.setEnabled == True:
-            self.ui2.label_103.setText(create_user)
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        sql = "INSERT INTO ektos_2019_transistor (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
-              "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
-              "M_Type, Tmin, Tmax, Height, AutomotiveStandard, Power1, CollectorDrainCurrent, VceoVgs, " \
-              "Fmax, Rdson, ThresholdVgs, Polarity) VALUES " \
-              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
-              "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
-              "%s, %s, %s, %s, %s, %s, %s)"
-        val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
-               rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
-               t_max, height, automativ_standart, power, collector_drain_current, vceo_vgs, fmax,
-               rdson, thresholdvgs, polarity)
-        sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
-                     "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
-
-        self.ui2.label_179.setText("Data recorded succssfully")
-        if self.ui2.lineEdit_70.isEnabled() == False:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_179.setText("Data recorded succssfully")
-            except Exception:
-                x = str(self.ui2.lineEdit_65.text())
-                mycursor.execute("DELETE FROM ektos_2019_transistor WHERE Part_Number = '{}'".format(x))
-                mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_179.setText("Data recorded succssfully")
-            mydb.commit()
-            self.clear_lines()
-
-        if self.ui2.lineEdit_70.isEnabled() == True:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_179.setText("Data recorded succssfully")
-                self.clear_lines()
-            except Exception:
-                self.ui2.label_179.setText("Duplicate entry for Part Number unique value")
-            mydb.commit()
-        self.ui2.groupBox_7.setEnabled(True)
-        self.ui2.groupBox_8.setEnabled(True)
-
-    def resistor(self):
-        a = strftime("%Y%m%d", gmtime())
-        global update_log
-        update_log = a + '(' + log + ')'
-        self.ui2.lineEdit_29.setText(update_log)
-        part_num = self.ui2.lineEdit_24.text()
-        part_type = self.ui2.lineEdit_18.text()
-        value = self.ui2.lineEdit_19.text()
-        description = self.ui2.lineEdit_20.text()
-        schematic_part = self.ui2.lineEdit_21.text()
-        pcb_footprint = self.ui2.lineEdit_22.text()
-        status = self.ui2.boxStatus_2.currentText()
-        rohs = self.ui2.boxStatus_15.currentText()
-        datasheet = self.ui2.lineEdit_25.text()
-        image = self.ui2.lineEdit_26.text()
-        notes = self.ui2.lineEdit_27.text()
-        part_class = self.ui2.lineEdit_28.text()
-        create_date = self.ui2.lineEdit_29.text()
-        rewiew_date = self.ui2.lineEdit_30.text()
-        updaye_date = self.ui2.lineEdit_31.text()
-        m_type = self.ui2.boxStatus_16.currentText()
-        t_min = self.ui2.lineEdit_33.text()
-        t_max = self.ui2.lineEdit_34.text()
-        height = self.ui2.lineEdit_35.text()
-        automativ_standart = self.ui2.lineEdit_52.text()
-        imax = self.ui2.lineEdit_53.text()
-        vmax = self.ui2.lineEdit_54.text()
-        power = self.ui2.lineEdit_55.text()
-        t_coeff = self.ui2.lineEdit_56.text()
-        tol = self.ui2.lineEdit_57.text()
-        vendor = self.ui2.lineEdit_73.text()
-        vendor_code = self.ui2.lineEdit_85.text()
-        man_part_number = self.ui2.lineEdit_178.text()
-        manufacturer = self.ui2.lineEdit_201.text()
-
-        create_user = myapp.logpas[0]
-        if self.ui2.label_65.setEnabled == True:
-            self.ui2.label_65.setText(create_user)
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        sql = "INSERT INTO ektos_2019_resistor (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
-              "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
-              "M_Type, Tmin, Tmax, Height, AutomotiveStandard, Imax, Vmax, Power1, T_Coeff, " \
-              "Tol) VALUES " \
-              "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
-              "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
-              "%s, %s, %s, %s, %s)"
-        val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
-               rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
-               t_max, height, automativ_standart, imax, vmax, power, t_coeff, tol)
-        sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
-                     "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
-
-
-        if self.ui2.lineEdit_29.isEnabled() == False:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_178.setText("Data recorded succssfully")
-            except Exception:
-                x = str(self.ui2.lineEdit_24.text())
-                mycursor.execute("DELETE FROM ektos_2019_resistor WHERE Part_Number = '{}'".format(x))
-                mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
-
-                # self.ui2.label_265.setText("Duplicate entry for Part Number unique value")
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_178.setText("Data recorded succssfully")
-            mydb.commit()
-            self.clear_lines()
-
-        if self.ui2.lineEdit_29.isEnabled() == True:
-            try:
-                mycursor.execute(sql, val)
-                mycursor.execute(sql_vendor, val_vendor)
-                self.ui2.label_178.setText("Data recorded succssfully")
-                self.clear_lines()
-            except Exception:
-                self.ui2.label_178.setText("Duplicate entry for Part Number unique value")
-            mydb.commit()
-        self.ui2.groupBox_2.setEnabled(True)
-        self.ui2.groupBox_4.setEnabled(True)
+    # def inductor(self):
+    #     a = strftime("%Y%m%d", gmtime())
+    #     global update_log
+    #     update_log = a + '(' + log + ')'
+    #     self.ui2.lineEdit_151.setText(update_log)
+    #     part_num = self.ui2.lineEdit_146.text()
+    #     part_type = self.ui2.lineEdit_140.text()
+    #     value = self.ui2.lineEdit_141.text()
+    #     description = self.ui2.lineEdit_142.text()
+    #     schematic_part = self.ui2.lineEdit_143.text()
+    #     pcb_footprint = self.ui2.lineEdit_144.text()
+    #     status = self.ui2.boxStatus_6.currentText()
+    #     rohs = self.ui2.boxStatus_19.currentText()
+    #     datasheet = self.ui2.lineEdit_147.text()
+    #     image = self.ui2.lineEdit_148.text()
+    #     notes = self.ui2.lineEdit_149.text()
+    #     part_class = self.ui2.lineEdit_150.text()
+    #     create_date = self.ui2.lineEdit_151.text()
+    #     rewiew_date = self.ui2.lineEdit_152.text()
+    #     updaye_date = self.ui2.lineEdit_153.text()
+    #     m_type = self.ui2.boxStatus_20.currentText()
+    #     t_min = self.ui2.lineEdit_155.text()
+    #     t_max = self.ui2.lineEdit_156.text()
+    #     height = self.ui2.lineEdit_157.text()
+    #     automativ_standart = self.ui2.lineEdit_158.text()
+    #     rms_current = self.ui2.lineEdit_159.text()
+    #     saturation_current = self.ui2.lineEdit_160.text()
+    #     dcresistance_max = self.ui2.lineEdit_161.text()
+    #     size = self.ui2.lineEdit_162.text()
+    #     vendor = self.ui2.lineEdit_163.text()
+    #     vendor_code = self.ui2.lineEdit_169.text()
+    #     manufacturer = self.ui2.lineEdit_222.text()
+    #     man_part_number = self.ui2.lineEdit_223.text()
+    #
+    #     create_user = myapp.logpas[0]
+    #     if self.ui2.label_208.setEnabled == True:
+    #         self.ui2.label_208.setText(create_user)
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     sql = "INSERT INTO ektos_2019_inductor (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
+    #           "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
+    #           "M_Type, Tmin, Tmax, Height, AutomotiveStandard, RmsCurrent, SaturationCurrent, DcresistanceMax, Size) VALUES " \
+    #           "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+    #           "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+    #           "%s, %s, %s, %s)"
+    #     val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
+    #            rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
+    #            t_max, height, automativ_standart, rms_current, saturation_current, dcresistance_max, size)
+    #     sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
+    #                  "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    #     val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
+    #
+    #     if self.ui2.lineEdit_151.isEnabled() == False:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_264.setText("Data recorded succssfully")
+    #         except Exception:
+    #             x = str(self.ui2.lineEdit_146.text())
+    #             mycursor.execute("DELETE FROM ektos_2019_diode WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_264.setText("Data recorded succssfully")
+    #         mydb.commit()
+    #         self.clear_lines()
+    #
+    #     if self.ui2.lineEdit_151.isEnabled() == True:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_264.setText("Data recorded succssfully")
+    #             self.clear_lines()
+    #         except Exception:
+    #             self.ui2.label_264.setText("Duplicate entry for Part Number unique value")
+    #         mydb.commit()
+    #     self.ui2.groupBox_16.setEnabled(True)
+    #     self.ui2.groupBox_17.setEnabled(True)
+    #
+    # def diode(self):
+    #     a = strftime("%Y%m%d", gmtime())
+    #     global update_log
+    #     update_log = a + '(' + log + ')'
+    #     self.ui2.lineEdit_126.setText(update_log)
+    #     part_num = self.ui2.lineEdit_121.text()
+    #     part_type = self.ui2.lineEdit_115.text()
+    #     value = self.ui2.lineEdit_116.text()
+    #     description = self.ui2.lineEdit_117.text()
+    #     schematic_part = self.ui2.lineEdit_118.text()
+    #     pcb_footprint = self.ui2.lineEdit_119.text()
+    #     status = self.ui2.boxStatus_4.currentText()
+    #     rohs = self.ui2.boxStatus_11.currentText()
+    #     datasheet = self.ui2.lineEdit_122.text()
+    #     image = self.ui2.lineEdit_123.text()
+    #     notes = self.ui2.lineEdit_124.text()
+    #     part_class = self.ui2.lineEdit_125.text()
+    #     create_date = self.ui2.lineEdit_126.text()
+    #     rewiew_date = self.ui2.lineEdit_127.text()
+    #     updaye_date = self.ui2.lineEdit_128.text()
+    #     m_type = self.ui2.boxStatus_12.currentText()
+    #     t_min = self.ui2.lineEdit_130.text()
+    #     t_max = self.ui2.lineEdit_131.text()
+    #     height = self.ui2.lineEdit_132.text()
+    #     automativ_standart = self.ui2.lineEdit_133.text()
+    #     reverse_vrrm_max = self.ui2.lineEdit_134.text()
+    #     forward_current = self.ui2.lineEdit_135.text()
+    #     forward_voltage_vf = self.ui2.lineEdit_136.text()
+    #     reverse_recovery_time_max = self.ui2.lineEdit_137.text()
+    #     forward_surge_current_max = self.ui2.lineEdit_138.text()
+    #     vendor = self.ui2.lineEdit_139.text()
+    #     vendor_code = self.ui2.lineEdit_145.text()
+    #     manufacturer = self.ui2.lineEdit_220.text()
+    #     man_part_number = self.ui2.lineEdit_221.text()
+    #
+    #     create_user = myapp.logpas[0]
+    #     if self.ui2.label_171.setEnabled == True:
+    #         self.ui2.label_171.setText(create_user)
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     sql = "INSERT INTO ektos_2019_diode (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
+    #           "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
+    #           "M_Type, Tmin, Tmax, Height, AutomotiveStandard, ReverseVrrmMax, ForwardCurrent, " \
+    #           "ForwardVoltageVf, ReverseRecoveryTimeMax, ForwardSurgeCurrentMax) VALUES " \
+    #           "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+    #           "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+    #           "%s, %s, %s, %s, %s)"
+    #     val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
+    #            rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
+    #            t_max, height, automativ_standart, reverse_vrrm_max, forward_current, forward_voltage_vf,
+    #            reverse_recovery_time_max, forward_surge_current_max)
+    #     sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
+    #                  "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    #     val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
+    #
+    #     if self.ui2.lineEdit_126.isEnabled() == False:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_181.setText("Data recorded succssfully")
+    #         except Exception:
+    #             x = str(self.ui2.lineEdit_121.text())
+    #             mycursor.execute("DELETE FROM ektos_2019_diode WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_181.setText("Data recorded succssfully")
+    #         mydb.commit()
+    #         self.clear_lines()
+    #
+    #     if self.ui2.lineEdit_126.isEnabled() == True:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_181.setText("Data recorded succssfully")
+    #             self.clear_lines()
+    #         except Exception:
+    #             self.ui2.label_181.setText("Duplicate entry for Part Number unique value")
+    #         mydb.commit()
+    #     self.ui2.groupBox_13.setEnabled(True)
+    #     self.ui2.groupBox_14.setEnabled(True)
+    #
+    #
+    # def connector(self):
+    #     a = strftime("%Y%m%d", gmtime())
+    #     global update_log
+    #     update_log = a + '(' + log + ')'
+    #     self.ui2.lineEdit_97.setText(update_log)
+    #     part_num = self.ui2.lineEdit_92.text()
+    #     part_type = self.ui2.lineEdit_86.text()
+    #     value = self.ui2.lineEdit_87.text()
+    #     description = self.ui2.lineEdit_88.text()
+    #     schematic_part = self.ui2.lineEdit_89.text()
+    #     pcb_footprint = self.ui2.lineEdit_90.text()
+    #     status = self.ui2.boxStatus_4.currentText()
+    #     rohs = self.ui2.boxStatus_11.currentText()
+    #     datasheet = self.ui2.lineEdit_93.text()
+    #     image = self.ui2.lineEdit_94.text()
+    #     notes = self.ui2.lineEdit_95.text()
+    #     part_class = self.ui2.lineEdit_96.text()
+    #     create_date = self.ui2.lineEdit_97.text()
+    #     rewiew_date = self.ui2.lineEdit_98.text()
+    #     updaye_date = self.ui2.lineEdit_99.text()
+    #     m_type = self.ui2.boxStatus_12.currentText()
+    #     t_min = self.ui2.lineEdit_101.text()
+    #     t_max = self.ui2.lineEdit_102.text()
+    #     height = self.ui2.lineEdit_103.text()
+    #     automativ_standart = self.ui2.lineEdit_104.text()
+    #     pitch_spacing = self.ui2.lineEdit_105.text()
+    #     contacts_qty = self.ui2.lineEdit_106.text()
+    #     gender = self.ui2.lineEdit_107.text()
+    #     rows_qty = self.ui2.lineEdit_108.text()
+    #     max_voltage_dc = self.ui2.lineEdit_109.text()
+    #     max_voltage_ac = self.ui2.lineEdit_110.text()
+    #     max_current_dc = self.ui2.lineEdit_111.text()
+    #     max_current_ac = self.ui2.lineEdit_112.text()
+    #     frequency_max = self.ui2.lineEdit_113.text()
+    #     vendor = self.ui2.lineEdit_114.text()
+    #     vendor_code = self.ui2.lineEdit_120.text()
+    #     manufacturer = self.ui2.lineEdit_219.text()
+    #     man_part_number = self.ui2.lineEdit_210.text()
+    #
+    #     create_user = myapp.logpas[0]
+    #     if self.ui2.label_136.setEnabled == True:
+    #         self.ui2.label_136.setText(create_user)
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     sql = "INSERT INTO ektos_2019_connector (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
+    #           "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
+    #           "M_Type, Tmin, Tmax, Height, AutomotiveStandard, PitchSpacing, ContactsQty, Gender, RowsQty, " \
+    #           "MaxVoltageDC, MaxVoltageAC, MaxCurrentDC, MaxCurrentAC, FrequencyMax) VALUES " \
+    #           "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+    #           "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+    #           "%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    #     val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
+    #            rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
+    #            t_max, height, automativ_standart, pitch_spacing, contacts_qty, gender, rows_qty, max_voltage_dc,
+    #            max_voltage_ac, max_current_dc, max_current_ac, frequency_max)
+    #     sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
+    #                  "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    #     val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
+    #
+    #     if self.ui2.lineEdit_97.isEnabled() == False:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_180.setText("Data recorded succssfully")
+    #         except Exception:
+    #             x = str(self.ui2.lineEdit_92.text())
+    #             mycursor.execute("DELETE FROM ektos_2019_connector WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_180.setText("Data recorded succssfully")
+    #         mydb.commit()
+    #         self.clear_lines()
+    #
+    #     if self.ui2.lineEdit_97.isEnabled() == True:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_180.setText("Data recorded succssfully")
+    #             self.clear_lines()
+    #         except Exception:
+    #             self.ui2.label_180.setText("Duplicate entry for Part Number unique value")
+    #         mydb.commit()
+    #     self.ui2.groupBox_11.setEnabled(True)
+    #     self.ui2.groupBox_10.setEnabled(True)
+    #     self.ui2.groupBox_26.setEnabled(True)
+    #
+    #
+    # def transistor(self):
+    #     a = strftime("%Y%m%d", gmtime())
+    #     global update_log
+    #     update_log = a + '(' + log + ')'
+    #     self.ui2.lineEdit_70.setText(update_log)
+    #     part_num = self.ui2.lineEdit_65.text()
+    #     part_type = self.ui2.lineEdit_59.text()
+    #     value = self.ui2.lineEdit_60.text()
+    #     description = self.ui2.lineEdit_61.text()
+    #     schematic_part = self.ui2.lineEdit_62.text()
+    #     pcb_footprint = self.ui2.lineEdit_63.text()
+    #     status = self.ui2.boxStatus_3.currentText()
+    #     rohs = self.ui2.boxStatus_14.currentText()
+    #     datasheet = self.ui2.lineEdit_66.text()
+    #     image = self.ui2.lineEdit_67.text()
+    #     notes = self.ui2.lineEdit_68.text()
+    #     part_class = self.ui2.lineEdit_69.text()
+    #     create_date = self.ui2.lineEdit_70.text()
+    #     rewiew_date = self.ui2.lineEdit_71.text()
+    #     updaye_date = self.ui2.lineEdit_72.text()
+    #     m_type = self.ui2.boxStatus_13.currentText()
+    #     t_min = self.ui2.lineEdit_74.text()
+    #     t_max = self.ui2.lineEdit_75.text()
+    #     height = self.ui2.lineEdit_76.text()
+    #     automativ_standart = self.ui2.lineEdit_77.text()
+    #     power = self.ui2.lineEdit_78.text()
+    #     collector_drain_current = self.ui2.lineEdit_79.text()
+    #     vceo_vgs = self.ui2.lineEdit_80.text()
+    #     fmax = self.ui2.lineEdit_81.text()
+    #     rdson = self.ui2.lineEdit_82.text()
+    #     thresholdvgs = self.ui2.lineEdit_83.text()
+    #     polarity = self.ui2.lineEdit_91.text()
+    #     vendor = self.ui2.lineEdit_84.text()
+    #     vendor_code = self.ui2.lineEdit_100.text()
+    #     manufacturer = self.ui2.lineEdit_154.text()
+    #     man_part_number = self.ui2.lineEdit_129.text()
+    #
+    #     create_user = myapp.logpas[0]
+    #     if self.ui2.label_103.setEnabled == True:
+    #         self.ui2.label_103.setText(create_user)
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     sql = "INSERT INTO ektos_2019_transistor (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
+    #           "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
+    #           "M_Type, Tmin, Tmax, Height, AutomotiveStandard, Power1, CollectorDrainCurrent, VceoVgs, " \
+    #           "Fmax, Rdson, ThresholdVgs, Polarity) VALUES " \
+    #           "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+    #           "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+    #           "%s, %s, %s, %s, %s, %s, %s)"
+    #     val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
+    #            rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
+    #            t_max, height, automativ_standart, power, collector_drain_current, vceo_vgs, fmax,
+    #            rdson, thresholdvgs, polarity)
+    #     sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
+    #                  "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    #     val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
+    #
+    #     self.ui2.label_179.setText("Data recorded succssfully")
+    #     if self.ui2.lineEdit_70.isEnabled() == False:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_179.setText("Data recorded succssfully")
+    #         except Exception:
+    #             x = str(self.ui2.lineEdit_65.text())
+    #             mycursor.execute("DELETE FROM ektos_2019_transistor WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_179.setText("Data recorded succssfully")
+    #         mydb.commit()
+    #         self.clear_lines()
+    #
+    #     if self.ui2.lineEdit_70.isEnabled() == True:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_179.setText("Data recorded succssfully")
+    #             self.clear_lines()
+    #         except Exception:
+    #             self.ui2.label_179.setText("Duplicate entry for Part Number unique value")
+    #         mydb.commit()
+    #     self.ui2.groupBox_7.setEnabled(True)
+    #     self.ui2.groupBox_8.setEnabled(True)
+    #
+    # def resistor(self):
+    #     a = strftime("%Y%m%d", gmtime())
+    #     global update_log
+    #     update_log = a + '(' + log + ')'
+    #     self.ui2.lineEdit_29.setText(update_log)
+    #     part_num = self.ui2.lineEdit_24.text()
+    #     part_type = self.ui2.lineEdit_18.text()
+    #     value = self.ui2.lineEdit_19.text()
+    #     description = self.ui2.lineEdit_20.text()
+    #     schematic_part = self.ui2.lineEdit_21.text()
+    #     pcb_footprint = self.ui2.lineEdit_22.text()
+    #     status = self.ui2.boxStatus_2.currentText()
+    #     rohs = self.ui2.boxStatus_15.currentText()
+    #     datasheet = self.ui2.lineEdit_25.text()
+    #     image = self.ui2.lineEdit_26.text()
+    #     notes = self.ui2.lineEdit_27.text()
+    #     part_class = self.ui2.lineEdit_28.text()
+    #     create_date = self.ui2.lineEdit_29.text()
+    #     rewiew_date = self.ui2.lineEdit_30.text()
+    #     updaye_date = self.ui2.lineEdit_31.text()
+    #     m_type = self.ui2.boxStatus_16.currentText()
+    #     t_min = self.ui2.lineEdit_33.text()
+    #     t_max = self.ui2.lineEdit_34.text()
+    #     height = self.ui2.lineEdit_35.text()
+    #     automativ_standart = self.ui2.lineEdit_52.text()
+    #     imax = self.ui2.lineEdit_53.text()
+    #     vmax = self.ui2.lineEdit_54.text()
+    #     power = self.ui2.lineEdit_55.text()
+    #     t_coeff = self.ui2.lineEdit_56.text()
+    #     tol = self.ui2.lineEdit_57.text()
+    #     vendor = self.ui2.lineEdit_73.text()
+    #     vendor_code = self.ui2.lineEdit_85.text()
+    #     man_part_number = self.ui2.lineEdit_178.text()
+    #     manufacturer = self.ui2.lineEdit_201.text()
+    #
+    #     create_user = myapp.logpas[0]
+    #     if self.ui2.label_65.setEnabled == True:
+    #         self.ui2.label_65.setText(create_user)
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     sql = "INSERT INTO ektos_2019_resistor (Part_Number, Part_Type, Value1, Description, Schematic_Part, " \
+    #           "PCB_Footprint, ROHS, Status1, Datasheet, Image, Notes, Part_Class, Create_Date, Review_Date, Update_Date," \
+    #           "M_Type, Tmin, Tmax, Height, AutomotiveStandard, Imax, Vmax, Power1, T_Coeff, " \
+    #           "Tol) VALUES " \
+    #           "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s," \
+    #           "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, " \
+    #           "%s, %s, %s, %s, %s)"
+    #     val = (part_num, part_type, value, description, schematic_part, pcb_footprint,
+    #            rohs, status, datasheet, image, notes, part_class, create_date, rewiew_date, updaye_date, m_type, t_min,
+    #            t_max, height, automativ_standart, imax, vmax, power, t_coeff, tol)
+    #     sql_vendor = "INSERT INTO 2019_ektos_cis_vendors (Part_Number, Manufacturer, Man_Part_Number, Datasheet, Vendor, " \
+    #                  "Vendor_Code, Create_Date, Update_Date, Notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    #     val_vendor = (part_num, manufacturer, man_part_number, datasheet, vendor, vendor_code, create_date, updaye_date, notes)
+    #
+    #
+    #     if self.ui2.lineEdit_29.isEnabled() == False:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_178.setText("Data recorded succssfully")
+    #         except Exception:
+    #             x = str(self.ui2.lineEdit_24.text())
+    #             mycursor.execute("DELETE FROM ektos_2019_resistor WHERE Part_Number = '{}'".format(x))
+    #             mycursor.execute("DELETE FROM 2019_ektos_cis_vendors WHERE Part_Number = '{}'".format(x))
+    #
+    #             # self.ui2.label_265.setText("Duplicate entry for Part Number unique value")
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_178.setText("Data recorded succssfully")
+    #         mydb.commit()
+    #         self.clear_lines()
+    #
+    #     if self.ui2.lineEdit_29.isEnabled() == True:
+    #         try:
+    #             mycursor.execute(sql, val)
+    #             mycursor.execute(sql_vendor, val_vendor)
+    #             self.ui2.label_178.setText("Data recorded succssfully")
+    #             self.clear_lines()
+    #         except Exception:
+    #             self.ui2.label_178.setText("Duplicate entry for Part Number unique value")
+    #         mydb.commit()
+    #     self.ui2.groupBox_2.setEnabled(True)
+    #     self.ui2.groupBox_4.setEnabled(True)
 
     # def first_serch(self):
     #     global search1
@@ -1839,738 +2117,738 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow2):  # Главное ме�
     #         self.ui2.listFound.addItem(str(fixed3))
     #
     #     self.ui2.listFound.itemDoubleClicked.connect(self.lict)
-    def onPressed(self):
-        self.ui2.editSearch3
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
+    # def onPressed(self):
+    #     self.ui2.editSearch3
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #
+    #
+    #     if search1 == 'Relay':
+    #         table1 = 'ektos_2019_relay'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'Resistor':
+    #         table1 = 'ektos_2019_resistor'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'Transistor':
+    #         table1 = 'ektos_2019_transistor'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'Connector':
+    #         table1 = 'ektos_2019_connector'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'Diode':
+    #         table1 = 'ektos_2019_diode'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'Inductor':
+    #         table1 = 'ektos_2019_inductor'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'Capacitor':
+    #         table1 = 'ektos_2019_capacitor'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'IntegratedCircuit':
+    #         table1 = 'ektos_2019_integratedcircuit'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'Mechanical':
+    #         table1 = 'ektos_2019_mechanical'
+    #         table2 = '2019_ektos_cis_vendors'
+    #     elif search1 == 'Other':
+    #         table1 = 'ektos_2019_other'
+    #         table2 = '2019_ektos_cis_vendors'
+    #
+    #     # self.ui2.label_176.setText(self.ui2.editSearch3.text())
+    #     c = self.ui2.editSearch3.text()
+    #
+    #
+    #     mycursor.execute("SELECT Part_Number FROM {} WHERE {} LIKE '%{}%'".format(table1, search2, c))
+    #     # mycursor.execute("SELECT Part_Number FROM ektos_2019_relay WHERE Part_Type LIKE 'RELAY\SOLID'")
+    #     self.ui2.listFound.clear()
+    #     for somedata in mycursor:
+    #
+    #         x = str(somedata)
+    #         self.ui2.listFound.addItem(str(x))
+    #     mycursor.execute("SELECT Part_Number FROM {} WHERE {} LIKE '%{}%'".format(table2, search2, c))
+    #     for somedata in mycursor:
+    #
+    #         x = str(somedata)
+    #         if somedata == 'Manufacturer' or somedata == 'Man_Part_Number' or somedata == 'Man_Part_Number' or somedata == 'Vendor' or somedata == 'Vendor_Code':
+    #             self.ui2.listFound.addItem(str(x))
 
 
-        if search1 == 'Relay':
-            table1 = 'ektos_2019_relay'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'Resistor':
-            table1 = 'ektos_2019_resistor'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'Transistor':
-            table1 = 'ektos_2019_transistor'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'Connector':
-            table1 = 'ektos_2019_connector'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'Diode':
-            table1 = 'ektos_2019_diode'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'Inductor':
-            table1 = 'ektos_2019_inductor'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'Capacitor':
-            table1 = 'ektos_2019_capacitor'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'IntegratedCircuit':
-            table1 = 'ektos_2019_integratedcircuit'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'Mechanical':
-            table1 = 'ektos_2019_mechanical'
-            table2 = '2019_ektos_cis_vendors'
-        elif search1 == 'Other':
-            table1 = 'ektos_2019_other'
-            table2 = '2019_ektos_cis_vendors'
 
-        # self.ui2.label_176.setText(self.ui2.editSearch3.text())
-        c = self.ui2.editSearch3.text()
-
-
-        mycursor.execute("SELECT Part_Number FROM {} WHERE {} LIKE '%{}%'".format(table1, search2, c))
-        # mycursor.execute("SELECT Part_Number FROM ektos_2019_relay WHERE Part_Type LIKE 'RELAY\SOLID'")
-        self.ui2.listFound.clear()
-        for somedata in mycursor:
-
-            x = str(somedata)
-            self.ui2.listFound.addItem(str(x))
-        mycursor.execute("SELECT Part_Number FROM {} WHERE {} LIKE '%{}%'".format(table2, search2, c))
-        for somedata in mycursor:
-
-            x = str(somedata)
-            if somedata == 'Manufacturer' or somedata == 'Man_Part_Number' or somedata == 'Man_Part_Number' or somedata == 'Vendor' or somedata == 'Vendor_Code':
-                self.ui2.listFound.addItem(str(x))
-
-
-
-    def review_component(self):
-        type_of_component = self.ui2.boxSearch1.currentText()
-
-        mydb = mysql.connector.connect(
-            host="mysql.ektos.net",
-            user="dpe",
-            passwd="dpe",
-            database="dpe",
-            charset='utf8',
-        )
-        mycursor = mydb.cursor()
-        a = 'Part_Number'
-        b = table1
-        c = found_item
-        fixed1 = ''.join(c.split(")"))
-        fixed2 = ''.join(fixed1.split("("))
-        fixed3 = ''.join(fixed2.split("'"))
-        fixed3 = ''.join(fixed3.split(","))
-        mycursor.execute("SELECT Review_Date FROM {}  WHERE {} = '{}'".format(b, a, fixed3))
-        for some_data in mycursor:
-            global fixedd3
-            fixedd1 = ''.join(str(some_data).split(")"))
-            fixedd2 = ''.join(fixedd1.split("("))
-            fixedd3 = ''.join(fixedd2.split("'"))
-            fixedd3 = ''.join(fixedd3.split(","))
-
-        if str(fixedd3) != '':
-            self.ui2.label_176.setText("This component has been reviewed")
-        else:
-            if type_of_component == 'Capacitor':
-                self.ui2.tabWidget.setCurrentIndex(6)
-                self.ui2.groupBox_19.setEnabled(False)
-                self.ui2.groupBox_20.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_170.setText(b[0]),
-                    self.ui2.lineEdit_164.setText(b[1]),
-                    self.ui2.lineEdit_165.setText(b[2]),
-                    self.ui2.lineEdit_166.setText(b[3]),
-                    self.ui2.lineEdit_167.setText(b[4]),
-                    self.ui2.lineEdit_168.setText(b[5]),
-                    self.ui2.boxStatus_21.setCurrentText(b[6]),
-                    self.ui2.boxStatus_7.setCurrentText(b[7]),
-                    self.ui2.lineEdit_171.setText(b[8]),
-                    self.ui2.lineEdit_172.setText(b[9]),
-                    self.ui2.lineEdit_173.setText(b[10]),
-                    self.ui2.lineEdit_174.setText(b[11]),
-                    self.ui2.lineEdit_175.setText(b[12]),
-                    self.ui2.lineEdit_176.setText(b[13]),
-                    self.ui2.lineEdit_177.setText(b[14]),
-                    self.ui2.boxStatus_22.setCurrentText(b[15]),
-                    self.ui2.lineEdit_179.setText(b[16]),
-                    self.ui2.lineEdit_180.setText(b[17]),
-                    self.ui2.lineEdit_181.setText(b[18]),
-                    self.ui2.lineEdit_182.setText(b[19]),
-                    self.ui2.lineEdit_183.setText(b[20]),
-                    self.ui2.lineEdit_184.setText(b[21]),
-                    self.ui2.lineEdit_185.setText(b[22]),
-                    self.ui2.lineEdit_186.setText(b[23]),
-                    self.ui2.lineEdit_187.setText(b[24]),
-                    self.ui2.lineEdit_188.setText(b[25]),
-                    self.ui2.lineEdit_189.setText(b[26]),
-                    self.ui2.lineEdit_190.setText(b[27]),
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_195.setText(b[5])
-                    self.ui2.lineEdit_191.setText(b[4])
-                    self.ui2.lineEdit_225.setText(b[3])
-                    self.ui2.lineEdit_224.setText(b[2])
-
-
-            elif type_of_component == 'Connector':
-                self.ui2.tabWidget.setCurrentIndex(3)
-                self.ui2.groupBox_10.setEnabled(False)
-                self.ui2.groupBox_11.setEnabled(False)
-                self.ui2.groupBox_26.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_92.setText(b[0])
-                    self.ui2.lineEdit_86.setText(b[1])
-                    self.ui2.lineEdit_87.setText(b[2])
-                    self.ui2.lineEdit_88.setText(b[3])
-                    self.ui2.lineEdit_89.setText(b[4])
-                    self.ui2.lineEdit_90.setText(b[5])
-                    self.ui2.boxStatus_11.setCurrentText(b[6])
-                    self.ui2.boxStatus_4.setCurrentText(b[7])
-                    self.ui2.lineEdit_93.setText(b[8])
-                    self.ui2.lineEdit_94.setText(b[9])
-                    self.ui2.lineEdit_95.setText(b[10])
-                    self.ui2.lineEdit_96.setText(b[11])
-                    self.ui2.lineEdit_97.setText(b[12])
-                    self.ui2.lineEdit_98.setText(b[13])
-                    self.ui2.boxStatus_12.setCurrentText(b[15])
-                    self.ui2.lineEdit_101.setText(b[16])
-                    self.ui2.lineEdit_102.setText(b[17])
-                    self.ui2.lineEdit_103.setText(b[18])
-                    self.ui2.lineEdit_104.setText(b[19])
-                    self.ui2.lineEdit_105.setText(b[20])
-                    self.ui2.lineEdit_106.setText(b[21])
-                    self.ui2.lineEdit_107.setText(b[22])
-                    self.ui2.lineEdit_108.setText(b[23])
-                    self.ui2.lineEdit_109.setText(b[24])
-                    self.ui2.lineEdit_110.setText(b[25])
-                    self.ui2.lineEdit_111.setText(b[26])
-                    self.ui2.lineEdit_112.setText(b[27])
-                    self.ui2.lineEdit_113.setText(b[28])
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_114.setText(b[4])
-                    self.ui2.lineEdit_120.setText(b[5])
-                    self.ui2.lineEdit_210.setText(b[3])
-                    self.ui2.lineEdit_219.setText(b[2])
-
-
-            elif type_of_component == 'Diode':
-                self.ui2.tabWidget.setCurrentIndex(4)
-                self.ui2.groupBox_13.setEnabled(False)
-                self.ui2.groupBox_14.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_121.setText(b[0])
-                    self.ui2.lineEdit_115.setText(b[1])
-                    self.ui2.lineEdit_116.setText(b[2])
-                    self.ui2.lineEdit_117.setText(b[3])
-                    self.ui2.lineEdit_118.setText(b[4])
-                    self.ui2.lineEdit_119.setText(b[5])
-                    self.ui2.boxStatus_17.setCurrentText(b[6])
-                    self.ui2.boxStatus_5.setCurrentText(b[7])
-                    self.ui2.lineEdit_122.setText(b[8])
-                    self.ui2.lineEdit_123.setText(b[9])
-                    self.ui2.lineEdit_124.setText(b[10])
-                    self.ui2.lineEdit_125.setText(b[11])
-                    self.ui2.lineEdit_126.setText(b[12])
-                    self.ui2.lineEdit_127.setText(b[13])
-                    self.ui2.boxStatus_18.setCurrentText(b[15])
-                    self.ui2.lineEdit_130.setText(b[16])
-                    self.ui2.lineEdit_131.setText(b[17])
-                    self.ui2.lineEdit_132.setText(b[18])
-                    self.ui2.lineEdit_133.setText(b[19])
-                    self.ui2.lineEdit_134.setText(b[20])
-                    self.ui2.lineEdit_135.setText(b[21])
-                    self.ui2.lineEdit_136.setText(b[22])
-                    self.ui2.lineEdit_137.setText(b[23])
-                    self.ui2.lineEdit_138.setText(b[24])
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_139.setText(b[4])
-                    self.ui2.lineEdit_145.setText(b[5])
-                    self.ui2.lineEdit_221.setText(b[3])
-                    self.ui2.lineEdit_220.setText(b[2])
-
-            elif type_of_component == 'Inductor':
-                self.ui2.tabWidget.setCurrentIndex(5)
-                self.ui2.groupBox_16.setEnabled(False)
-                self.ui2.groupBox_17.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_146.setText(b[0])
-                    self.ui2.lineEdit_140.setText(b[1])
-                    self.ui2.lineEdit_141.setText(b[2])
-                    self.ui2.lineEdit_142.setText(b[3])
-                    self.ui2.lineEdit_143.setText(b[4])
-                    self.ui2.lineEdit_144.setText(b[5])
-                    self.ui2.boxStatus_19.setCurrentText(b[6])
-                    self.ui2.boxStatus_6.setCurrentText(b[7])
-                    self.ui2.lineEdit_147.setText(b[8])
-                    self.ui2.lineEdit_148.setText(b[9])
-                    self.ui2.lineEdit_149.setText(b[10])
-                    self.ui2.lineEdit_150.setText(b[11])
-                    self.ui2.lineEdit_151.setText(b[12])
-                    self.ui2.lineEdit_152.setText(b[13])
-                    self.ui2.boxStatus_20.setCurrentText(b[15])
-                    self.ui2.lineEdit_155.setText(b[16])
-                    self.ui2.lineEdit_156.setText(b[17])
-                    self.ui2.lineEdit_157.setText(b[18])
-                    self.ui2.lineEdit_158.setText(b[19])
-                    self.ui2.lineEdit_159.setText(b[20])
-                    self.ui2.lineEdit_160.setText(b[21])
-                    self.ui2.lineEdit_161.setText(b[22])
-                    self.ui2.lineEdit_162.setText(b[23])
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_163.setText(b[4])
-                    self.ui2.lineEdit_169.setText(b[5])
-                    self.ui2.lineEdit_223.setText(b[3])
-                    self.ui2.lineEdit_222.setText(b[2])
-
-            elif type_of_component == 'IntegratedCircuit':
-                self.ui2.tabWidget.setCurrentIndex(7)
-                self.ui2.groupBox_31.setEnabled(False)
-                self.ui2.groupBox_32.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_294.setText(b[0])
-                    self.ui2.lineEdit_192.setText(b[1])
-                    self.ui2.lineEdit_193.setText(b[2])
-                    self.ui2.lineEdit_194.setText(b[3])
-                    self.ui2.lineEdit_291.setText(b[4])
-                    self.ui2.lineEdit_292.setText(b[5])
-                    self.ui2.boxStatus_23.setCurrentText(b[6])
-                    self.ui2.boxStatus_8.setCurrentText(b[7])
-                    self.ui2.lineEdit_295.setText(b[8])
-                    self.ui2.lineEdit_296.setText(b[9])
-                    self.ui2.lineEdit_297.setText(b[10])
-                    self.ui2.lineEdit_298.setText(b[11])
-                    self.ui2.lineEdit_299.setText(b[12])
-                    self.ui2.lineEdit_300.setText(b[13])
-                    self.ui2.boxStatus_24.setCurrentText(b[15])
-                    self.ui2.lineEdit_303.setText(b[16])
-                    self.ui2.lineEdit_304.setText(b[17])
-                    self.ui2.lineEdit_305.setText(b[18])
-                    self.ui2.lineEdit_306.setText(b[19])
-                    self.ui2.lineEdit_307.setText(b[20])
-                    self.ui2.lineEdit_308.setText(b[21])
-                    self.ui2.lineEdit_309.setText(b[22])
-                    self.ui2.lineEdit_310.setText(b[23])
-                    self.ui2.lineEdit_314.setText(b[24])
-                    self.ui2.lineEdit_315.setText(b[25])
-
-            elif type_of_component == 'Mechanical':
-                self.ui2.tabWidget.setCurrentIndex(8)
-                self.ui2.groupBox_22.setEnabled(False)
-                self.ui2.groupBox_23.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_202.setText(b[0])
-                    self.ui2.lineEdit_196.setText(b[1])
-                    self.ui2.lineEdit_197.setText(b[2])
-                    self.ui2.lineEdit_198.setText(b[3])
-                    self.ui2.lineEdit_199.setText(b[4])
-                    self.ui2.lineEdit_200.setText(b[5])
-                    self.ui2.boxStatus_25.setCurrentText(b[6])
-                    self.ui2.boxStatus_9.setCurrentText(b[7])
-                    self.ui2.lineEdit_203.setText(b[8])
-                    self.ui2.lineEdit_204.setText(b[9])
-                    self.ui2.lineEdit_205.setText(b[10])
-                    self.ui2.lineEdit_206.setText(b[11])
-                    self.ui2.lineEdit_207.setText(b[12])
-                    self.ui2.lineEdit_208.setText(b[13])
-                    self.ui2.boxStatus_26.setCurrentText(b[15])
-                    self.ui2.lineEdit_211.setText(b[16])
-                    self.ui2.lineEdit_212.setText(b[17])
-                    self.ui2.lineEdit_213.setText(b[18])
-                    self.ui2.lineEdit_214.setText(b[19])
-                    self.ui2.lineEdit_215.setText(b[20])
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_216.setText(b[4])
-                    self.ui2.lineEdit_217.setText(b[5])
-                    self.ui2.lineEdit_229.setText(b[3])
-                    self.ui2.lineEdit_228.setText(b[2])
-
-            elif type_of_component == 'Other':
-                self.ui2.tabWidget.setCurrentIndex(9)
-                self.ui2.groupBox_28.setEnabled(False)
-                self.ui2.groupBox_29.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_266.setText(b[0])
-                    self.ui2.lineEdit_260.setText(b[1])
-                    self.ui2.lineEdit_261.setText(b[2])
-                    self.ui2.lineEdit_262.setText(b[3])
-                    self.ui2.lineEdit_263.setText(b[4])
-                    self.ui2.lineEdit_264.setText(b[5])
-                    self.ui2.boxStatus_27.setCurrentText(b[6])
-                    self.ui2.boxStatus_10.setCurrentText(b[7])
-                    self.ui2.lineEdit_267.setText(b[8])
-                    self.ui2.lineEdit_268.setText(b[9])
-                    self.ui2.lineEdit_269.setText(b[10])
-                    self.ui2.lineEdit_270.setText(b[11])
-                    self.ui2.lineEdit_271.setText(b[12])
-                    self.ui2.lineEdit_272.setText(b[13])
-                    self.ui2.boxStatus_30.setCurrentText(b[15])
-                    self.ui2.lineEdit_275.setText(b[16])
-                    self.ui2.lineEdit_276.setText(b[17])
-                    self.ui2.lineEdit_277.setText(b[18])
-                    self.ui2.lineEdit_278.setText(b[19])
-                    self.ui2.lineEdit_279.setText(b[20])
-                    self.ui2.lineEdit_280.setText(b[21])
-                    self.ui2.lineEdit_281.setText(b[22])
-                    self.ui2.lineEdit_282.setText(b[23])
-                    self.ui2.lineEdit_283.setText(b[24])
-                    self.ui2.lineEdit_284.setText(b[25])
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_316.setText(b[4])
-                    self.ui2.lineEdit_317.setText(b[5])
-                    self.ui2.lineEdit_231.setText(b[3])
-                    self.ui2.lineEdit_230.setText(b[2])
-
-
-            elif type_of_component == 'Relay':
-                self.ui2.tabWidget.setCurrentIndex(0)
-                self.ui2.groupBox.setEnabled(False)
-                self.ui2.groupBox_3.setEnabled(False)
-                self.ui2.groupBox_25.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_1.setText(b[0])
-                    self.ui2.lineEdit_2.setText(b[1])
-                    self.ui2.lineEdit_3.setText(b[2])
-                    self.ui2.lineEdit_4.setText(b[3])
-                    self.ui2.lineEdit_5.setText(b[4])
-                    self.ui2.lineEdit_6.setText(b[5])
-                    self.ui2.boxStatus_31.setCurrentText(b[6])
-                    self.ui2.boxStatus.setCurrentText(b[7])
-                    self.ui2.lineEdit_9.setText(b[8])
-                    self.ui2.lineEdit_10.setText(b[9])
-                    self.ui2.lineEdit_11.setText(b[10])
-                    self.ui2.lineEdit_12.setText(b[11])
-                    self.ui2.lineEdit_13.setText(b[12])
-                    self.ui2.lineEdit_14.setText(b[13])
-                    self.ui2.boxStatus_32.setCurrentText(b[15])
-                    self.ui2.lineEdit_33.setText(b[16])
-                    self.ui2.lineEdit_34.setText(b[17])
-                    self.ui2.lineEdit_35.setText(b[18])
-                    self.ui2.lineEdit_36.setText(b[19])
-                    self.ui2.lineEdit_37.setText(b[20])
-                    self.ui2.lineEdit_38.setText(b[21])
-                    self.ui2.lineEdit_39.setText(b[22])
-                    self.ui2.lineEdit_40.setText(b[23])
-                    self.ui2.lineEdit_41.setText(b[24])
-                    self.ui2.lineEdit_42.setText(b[25])
-                    self.ui2.lineEdit_43.setText(b[26])
-                    self.ui2.lineEdit_44.setText(b[27])
-                    self.ui2.boxStatus_28.setCurrentText(b[28])
-                    self.ui2.boxStatus_29.setCurrentText(b[29])
-                    self.ui2.lineEdit_47.setText(b[30])
-                    self.ui2.lineEdit_48.setText(b[31])
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_58.setText(b[4])
-                    self.ui2.lineEdit_64.setText(b[5])
-                    self.ui2.lineEdit_45.setText(b[3])
-                    self.ui2.lineEdit_46.setText(b[2])
-
-            elif type_of_component == 'Resistor':
-                self.ui2.tabWidget.setCurrentIndex(1)
-                self.ui2.groupBox_2.setEnabled(False)
-                self.ui2.groupBox_4.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_24.setText(b[0])
-                    self.ui2.lineEdit_18.setText(b[1])
-                    self.ui2.lineEdit_19.setText(b[2])
-                    self.ui2.lineEdit_20.setText(b[3])
-                    self.ui2.lineEdit_21.setText(b[4])
-                    self.ui2.lineEdit_22.setText(b[5])
-                    self.ui2.boxStatus_15.setCurrentText(b[6])
-                    self.ui2.boxStatus_2.setCurrentText(b[7])
-                    self.ui2.lineEdit_25.setText(b[8])
-                    self.ui2.lineEdit_26.setText(b[9])
-                    self.ui2.lineEdit_27.setText(b[10])
-                    self.ui2.lineEdit_28.setText(b[11])
-                    self.ui2.lineEdit_29.setText(b[12])
-                    self.ui2.lineEdit_30.setText(b[13])
-                    self.ui2.boxStatus_16.setCurrentText(b[15])
-                    self.ui2.lineEdit_49.setText(b[16])
-                    self.ui2.lineEdit_50.setText(b[17])
-                    self.ui2.lineEdit_51.setText(b[18])
-                    self.ui2.lineEdit_52.setText(b[19])
-                    self.ui2.lineEdit_53.setText(b[20])
-                    self.ui2.lineEdit_54.setText(b[21])
-                    self.ui2.lineEdit_55.setText(b[22])
-                    self.ui2.lineEdit_56.setText(b[23])
-                    self.ui2.lineEdit_57.setText(b[24])
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_73.setText(b[4])
-                    self.ui2.lineEdit_85.setText(b[5])
-                    self.ui2.lineEdit_178.setText(b[3])
-                    self.ui2.lineEdit_201.setText(b[2])
-
-            elif type_of_component == 'Transistor':
-                self.ui2.tabWidget.setCurrentIndex(2)
-                self.ui2.groupBox_7.setEnabled(False)
-                self.ui2.groupBox_8.setEnabled(False)
-
-                mydb = mysql.connector.connect(
-                    host="mysql.ektos.net",
-                    user="dpe",
-                    passwd="dpe",
-                    database="dpe",
-                    charset='utf8',
-                )
-                mycursor = mydb.cursor()
-                a = 'Part_Number'
-                b = table1
-                c = found_item
-                fixed1 = ''.join(c.split(")"))
-                fixed2 = ''.join(fixed1.split("("))
-                fixed3 = ''.join(fixed2.split("'"))
-                fixed3 = ''.join(fixed3.split(","))
-                mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                counter = -1
-                for data12 in mycursor:
-                    b = data12
-                    for i in data12:
-                        counter += 1
-                if b[13] != '':
-                    self.ui2.label_265.setText("This component has been reviewed")
-                    self.ui2.lineEdit_176.setEnabled(False)
-                else:
-                    self.ui2.lineEdit_65.setText(b[0])
-                    self.ui2.lineEdit_59.setText(b[1])
-                    self.ui2.lineEdit_60.setText(b[2])
-                    self.ui2.lineEdit_61.setText(b[3])
-                    self.ui2.lineEdit_62.setText(b[4])
-                    self.ui2.lineEdit_63.setText(b[5])
-                    self.ui2.boxStatus_14.setCurrentText(b[6])
-                    self.ui2.boxStatus_3.setCurrentText(b[7])
-                    self.ui2.lineEdit_66.setText(b[8])
-                    self.ui2.lineEdit_67.setText(b[9])
-                    self.ui2.lineEdit_68.setText(b[10])
-                    self.ui2.lineEdit_69.setText(b[11])
-                    self.ui2.lineEdit_70.setText(b[12])
-                    self.ui2.lineEdit_71.setText(b[13])
-                    self.ui2.boxStatus_13.setCurrentText(b[15])
-                    self.ui2.lineEdit_74.setText(b[16])
-                    self.ui2.lineEdit_75.setText(b[17])
-                    self.ui2.lineEdit_76.setText(b[18])
-                    self.ui2.lineEdit_77.setText(b[19])
-                    self.ui2.lineEdit_78.setText(b[20])
-                    self.ui2.lineEdit_79.setText(b[21])
-                    self.ui2.lineEdit_80.setText(b[22])
-                    self.ui2.lineEdit_81.setText(b[23])
-                    self.ui2.lineEdit_82.setText(b[24])
-                    self.ui2.lineEdit_83.setText(b[25])
-                    self.ui2.lineEdit_84.setText(b[26])
-                    b = table2
-                    mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
-                    for data12 in mycursor:
-                        b = data12
-                    self.ui2.lineEdit_91.setText(b[4])
-                    self.ui2.lineEdit_100.setText(b[5])
-                    self.ui2.lineEdit_129.setText(b[3])
-                    self.ui2.lineEdit_154.setText(b[2])
+    # def review_component(self):
+    #     type_of_component = self.ui2.boxSearch1.currentText()
+    #
+    #     mydb = mysql.connector.connect(
+    #         host="mysql.ektos.net",
+    #         user="dpe",
+    #         passwd="dpe",
+    #         database="dpe",
+    #         charset='utf8',
+    #     )
+    #     mycursor = mydb.cursor()
+    #     a = 'Part_Number'
+    #     b = table1
+    #     c = found_item
+    #     fixed1 = ''.join(c.split(")"))
+    #     fixed2 = ''.join(fixed1.split("("))
+    #     fixed3 = ''.join(fixed2.split("'"))
+    #     fixed3 = ''.join(fixed3.split(","))
+    #     mycursor.execute("SELECT Review_Date FROM {}  WHERE {} = '{}'".format(b, a, fixed3))
+    #     for some_data in mycursor:
+    #         global fixedd3
+    #         fixedd1 = ''.join(str(some_data).split(")"))
+    #         fixedd2 = ''.join(fixedd1.split("("))
+    #         fixedd3 = ''.join(fixedd2.split("'"))
+    #         fixedd3 = ''.join(fixedd3.split(","))
+    #
+    #     if str(fixedd3) != '':
+    #         self.ui2.label_176.setText("This component has been reviewed")
+    #     else:
+    #         if type_of_component == 'Capacitor':
+    #             self.ui2.tabWidget.setCurrentIndex(6)
+    #             self.ui2.groupBox_19.setEnabled(False)
+    #             self.ui2.groupBox_20.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_170.setText(b[0]),
+    #                 self.ui2.lineEdit_164.setText(b[1]),
+    #                 self.ui2.lineEdit_165.setText(b[2]),
+    #                 self.ui2.lineEdit_166.setText(b[3]),
+    #                 self.ui2.lineEdit_167.setText(b[4]),
+    #                 self.ui2.lineEdit_168.setText(b[5]),
+    #                 self.ui2.boxStatus_21.setCurrentText(b[6]),
+    #                 self.ui2.boxStatus_7.setCurrentText(b[7]),
+    #                 self.ui2.lineEdit_171.setText(b[8]),
+    #                 self.ui2.lineEdit_172.setText(b[9]),
+    #                 self.ui2.lineEdit_173.setText(b[10]),
+    #                 self.ui2.lineEdit_174.setText(b[11]),
+    #                 self.ui2.lineEdit_175.setText(b[12]),
+    #                 self.ui2.lineEdit_176.setText(b[13]),
+    #                 self.ui2.lineEdit_177.setText(b[14]),
+    #                 self.ui2.boxStatus_22.setCurrentText(b[15]),
+    #                 self.ui2.lineEdit_179.setText(b[16]),
+    #                 self.ui2.lineEdit_180.setText(b[17]),
+    #                 self.ui2.lineEdit_181.setText(b[18]),
+    #                 self.ui2.lineEdit_182.setText(b[19]),
+    #                 self.ui2.lineEdit_183.setText(b[20]),
+    #                 self.ui2.lineEdit_184.setText(b[21]),
+    #                 self.ui2.lineEdit_185.setText(b[22]),
+    #                 self.ui2.lineEdit_186.setText(b[23]),
+    #                 self.ui2.lineEdit_187.setText(b[24]),
+    #                 self.ui2.lineEdit_188.setText(b[25]),
+    #                 self.ui2.lineEdit_189.setText(b[26]),
+    #                 self.ui2.lineEdit_190.setText(b[27]),
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_195.setText(b[5])
+    #                 self.ui2.lineEdit_191.setText(b[4])
+    #                 self.ui2.lineEdit_225.setText(b[3])
+    #                 self.ui2.lineEdit_224.setText(b[2])
+    #
+    #
+    #         elif type_of_component == 'Connector':
+    #             self.ui2.tabWidget.setCurrentIndex(3)
+    #             self.ui2.groupBox_10.setEnabled(False)
+    #             self.ui2.groupBox_11.setEnabled(False)
+    #             self.ui2.groupBox_26.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_92.setText(b[0])
+    #                 self.ui2.lineEdit_86.setText(b[1])
+    #                 self.ui2.lineEdit_87.setText(b[2])
+    #                 self.ui2.lineEdit_88.setText(b[3])
+    #                 self.ui2.lineEdit_89.setText(b[4])
+    #                 self.ui2.lineEdit_90.setText(b[5])
+    #                 self.ui2.boxStatus_11.setCurrentText(b[6])
+    #                 self.ui2.boxStatus_4.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_93.setText(b[8])
+    #                 self.ui2.lineEdit_94.setText(b[9])
+    #                 self.ui2.lineEdit_95.setText(b[10])
+    #                 self.ui2.lineEdit_96.setText(b[11])
+    #                 self.ui2.lineEdit_97.setText(b[12])
+    #                 self.ui2.lineEdit_98.setText(b[13])
+    #                 self.ui2.boxStatus_12.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_101.setText(b[16])
+    #                 self.ui2.lineEdit_102.setText(b[17])
+    #                 self.ui2.lineEdit_103.setText(b[18])
+    #                 self.ui2.lineEdit_104.setText(b[19])
+    #                 self.ui2.lineEdit_105.setText(b[20])
+    #                 self.ui2.lineEdit_106.setText(b[21])
+    #                 self.ui2.lineEdit_107.setText(b[22])
+    #                 self.ui2.lineEdit_108.setText(b[23])
+    #                 self.ui2.lineEdit_109.setText(b[24])
+    #                 self.ui2.lineEdit_110.setText(b[25])
+    #                 self.ui2.lineEdit_111.setText(b[26])
+    #                 self.ui2.lineEdit_112.setText(b[27])
+    #                 self.ui2.lineEdit_113.setText(b[28])
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_114.setText(b[4])
+    #                 self.ui2.lineEdit_120.setText(b[5])
+    #                 self.ui2.lineEdit_210.setText(b[3])
+    #                 self.ui2.lineEdit_219.setText(b[2])
+    #
+    #
+    #         elif type_of_component == 'Diode':
+    #             self.ui2.tabWidget.setCurrentIndex(4)
+    #             self.ui2.groupBox_13.setEnabled(False)
+    #             self.ui2.groupBox_14.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_121.setText(b[0])
+    #                 self.ui2.lineEdit_115.setText(b[1])
+    #                 self.ui2.lineEdit_116.setText(b[2])
+    #                 self.ui2.lineEdit_117.setText(b[3])
+    #                 self.ui2.lineEdit_118.setText(b[4])
+    #                 self.ui2.lineEdit_119.setText(b[5])
+    #                 self.ui2.boxStatus_17.setCurrentText(b[6])
+    #                 self.ui2.boxStatus_5.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_122.setText(b[8])
+    #                 self.ui2.lineEdit_123.setText(b[9])
+    #                 self.ui2.lineEdit_124.setText(b[10])
+    #                 self.ui2.lineEdit_125.setText(b[11])
+    #                 self.ui2.lineEdit_126.setText(b[12])
+    #                 self.ui2.lineEdit_127.setText(b[13])
+    #                 self.ui2.boxStatus_18.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_130.setText(b[16])
+    #                 self.ui2.lineEdit_131.setText(b[17])
+    #                 self.ui2.lineEdit_132.setText(b[18])
+    #                 self.ui2.lineEdit_133.setText(b[19])
+    #                 self.ui2.lineEdit_134.setText(b[20])
+    #                 self.ui2.lineEdit_135.setText(b[21])
+    #                 self.ui2.lineEdit_136.setText(b[22])
+    #                 self.ui2.lineEdit_137.setText(b[23])
+    #                 self.ui2.lineEdit_138.setText(b[24])
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_139.setText(b[4])
+    #                 self.ui2.lineEdit_145.setText(b[5])
+    #                 self.ui2.lineEdit_221.setText(b[3])
+    #                 self.ui2.lineEdit_220.setText(b[2])
+    #
+    #         elif type_of_component == 'Inductor':
+    #             self.ui2.tabWidget.setCurrentIndex(5)
+    #             self.ui2.groupBox_16.setEnabled(False)
+    #             self.ui2.groupBox_17.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_146.setText(b[0])
+    #                 self.ui2.lineEdit_140.setText(b[1])
+    #                 self.ui2.lineEdit_141.setText(b[2])
+    #                 self.ui2.lineEdit_142.setText(b[3])
+    #                 self.ui2.lineEdit_143.setText(b[4])
+    #                 self.ui2.lineEdit_144.setText(b[5])
+    #                 self.ui2.boxStatus_19.setCurrentText(b[6])
+    #                 self.ui2.boxStatus_6.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_147.setText(b[8])
+    #                 self.ui2.lineEdit_148.setText(b[9])
+    #                 self.ui2.lineEdit_149.setText(b[10])
+    #                 self.ui2.lineEdit_150.setText(b[11])
+    #                 self.ui2.lineEdit_151.setText(b[12])
+    #                 self.ui2.lineEdit_152.setText(b[13])
+    #                 self.ui2.boxStatus_20.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_155.setText(b[16])
+    #                 self.ui2.lineEdit_156.setText(b[17])
+    #                 self.ui2.lineEdit_157.setText(b[18])
+    #                 self.ui2.lineEdit_158.setText(b[19])
+    #                 self.ui2.lineEdit_159.setText(b[20])
+    #                 self.ui2.lineEdit_160.setText(b[21])
+    #                 self.ui2.lineEdit_161.setText(b[22])
+    #                 self.ui2.lineEdit_162.setText(b[23])
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_163.setText(b[4])
+    #                 self.ui2.lineEdit_169.setText(b[5])
+    #                 self.ui2.lineEdit_223.setText(b[3])
+    #                 self.ui2.lineEdit_222.setText(b[2])
+    #
+    #         elif type_of_component == 'IntegratedCircuit':
+    #             self.ui2.tabWidget.setCurrentIndex(7)
+    #             self.ui2.groupBox_31.setEnabled(False)
+    #             self.ui2.groupBox_32.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_294.setText(b[0])
+    #                 self.ui2.lineEdit_192.setText(b[1])
+    #                 self.ui2.lineEdit_193.setText(b[2])
+    #                 self.ui2.lineEdit_194.setText(b[3])
+    #                 self.ui2.lineEdit_291.setText(b[4])
+    #                 self.ui2.lineEdit_292.setText(b[5])
+    #                 self.ui2.boxStatus_23.setCurrentText(b[6])
+    #                 self.ui2.boxStatus_8.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_295.setText(b[8])
+    #                 self.ui2.lineEdit_296.setText(b[9])
+    #                 self.ui2.lineEdit_297.setText(b[10])
+    #                 self.ui2.lineEdit_298.setText(b[11])
+    #                 self.ui2.lineEdit_299.setText(b[12])
+    #                 self.ui2.lineEdit_300.setText(b[13])
+    #                 self.ui2.boxStatus_24.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_303.setText(b[16])
+    #                 self.ui2.lineEdit_304.setText(b[17])
+    #                 self.ui2.lineEdit_305.setText(b[18])
+    #                 self.ui2.lineEdit_306.setText(b[19])
+    #                 self.ui2.lineEdit_307.setText(b[20])
+    #                 self.ui2.lineEdit_308.setText(b[21])
+    #                 self.ui2.lineEdit_309.setText(b[22])
+    #                 self.ui2.lineEdit_310.setText(b[23])
+    #                 self.ui2.lineEdit_314.setText(b[24])
+    #                 self.ui2.lineEdit_315.setText(b[25])
+    #
+    #         elif type_of_component == 'Mechanical':
+    #             self.ui2.tabWidget.setCurrentIndex(8)
+    #             self.ui2.groupBox_22.setEnabled(False)
+    #             self.ui2.groupBox_23.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_202.setText(b[0])
+    #                 self.ui2.lineEdit_196.setText(b[1])
+    #                 self.ui2.lineEdit_197.setText(b[2])
+    #                 self.ui2.lineEdit_198.setText(b[3])
+    #                 self.ui2.lineEdit_199.setText(b[4])
+    #                 self.ui2.lineEdit_200.setText(b[5])
+    #                 self.ui2.boxStatus_25.setCurrentText(b[6])
+    #                 self.ui2.boxStatus_9.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_203.setText(b[8])
+    #                 self.ui2.lineEdit_204.setText(b[9])
+    #                 self.ui2.lineEdit_205.setText(b[10])
+    #                 self.ui2.lineEdit_206.setText(b[11])
+    #                 self.ui2.lineEdit_207.setText(b[12])
+    #                 self.ui2.lineEdit_208.setText(b[13])
+    #                 self.ui2.boxStatus_26.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_211.setText(b[16])
+    #                 self.ui2.lineEdit_212.setText(b[17])
+    #                 self.ui2.lineEdit_213.setText(b[18])
+    #                 self.ui2.lineEdit_214.setText(b[19])
+    #                 self.ui2.lineEdit_215.setText(b[20])
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_216.setText(b[4])
+    #                 self.ui2.lineEdit_217.setText(b[5])
+    #                 self.ui2.lineEdit_229.setText(b[3])
+    #                 self.ui2.lineEdit_228.setText(b[2])
+    #
+    #         elif type_of_component == 'Other':
+    #             self.ui2.tabWidget.setCurrentIndex(9)
+    #             self.ui2.groupBox_28.setEnabled(False)
+    #             self.ui2.groupBox_29.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_266.setText(b[0])
+    #                 self.ui2.lineEdit_260.setText(b[1])
+    #                 self.ui2.lineEdit_261.setText(b[2])
+    #                 self.ui2.lineEdit_262.setText(b[3])
+    #                 self.ui2.lineEdit_263.setText(b[4])
+    #                 self.ui2.lineEdit_264.setText(b[5])
+    #                 self.ui2.boxStatus_27.setCurrentText(b[6])
+    #                 self.ui2.boxStatus_10.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_267.setText(b[8])
+    #                 self.ui2.lineEdit_268.setText(b[9])
+    #                 self.ui2.lineEdit_269.setText(b[10])
+    #                 self.ui2.lineEdit_270.setText(b[11])
+    #                 self.ui2.lineEdit_271.setText(b[12])
+    #                 self.ui2.lineEdit_272.setText(b[13])
+    #                 self.ui2.boxStatus_30.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_275.setText(b[16])
+    #                 self.ui2.lineEdit_276.setText(b[17])
+    #                 self.ui2.lineEdit_277.setText(b[18])
+    #                 self.ui2.lineEdit_278.setText(b[19])
+    #                 self.ui2.lineEdit_279.setText(b[20])
+    #                 self.ui2.lineEdit_280.setText(b[21])
+    #                 self.ui2.lineEdit_281.setText(b[22])
+    #                 self.ui2.lineEdit_282.setText(b[23])
+    #                 self.ui2.lineEdit_283.setText(b[24])
+    #                 self.ui2.lineEdit_284.setText(b[25])
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_316.setText(b[4])
+    #                 self.ui2.lineEdit_317.setText(b[5])
+    #                 self.ui2.lineEdit_231.setText(b[3])
+    #                 self.ui2.lineEdit_230.setText(b[2])
+    #
+    #
+    #         elif type_of_component == 'Relay':
+    #             self.ui2.tabWidget.setCurrentIndex(0)
+    #             self.ui2.groupBox.setEnabled(False)
+    #             self.ui2.groupBox_3.setEnabled(False)
+    #             self.ui2.groupBox_25.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_1.setText(b[0])
+    #                 self.ui2.lineEdit_2.setText(b[1])
+    #                 self.ui2.lineEdit_3.setText(b[2])
+    #                 self.ui2.lineEdit_4.setText(b[3])
+    #                 self.ui2.lineEdit_5.setText(b[4])
+    #                 self.ui2.lineEdit_6.setText(b[5])
+    #                 self.ui2.boxStatus_31.setCurrentText(b[6])
+    #                 self.ui2.boxStatus.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_9.setText(b[8])
+    #                 self.ui2.lineEdit_10.setText(b[9])
+    #                 self.ui2.lineEdit_11.setText(b[10])
+    #                 self.ui2.lineEdit_12.setText(b[11])
+    #                 self.ui2.lineEdit_13.setText(b[12])
+    #                 self.ui2.lineEdit_14.setText(b[13])
+    #                 self.ui2.boxStatus_32.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_33.setText(b[16])
+    #                 self.ui2.lineEdit_34.setText(b[17])
+    #                 self.ui2.lineEdit_35.setText(b[18])
+    #                 self.ui2.lineEdit_36.setText(b[19])
+    #                 self.ui2.lineEdit_37.setText(b[20])
+    #                 self.ui2.lineEdit_38.setText(b[21])
+    #                 self.ui2.lineEdit_39.setText(b[22])
+    #                 self.ui2.lineEdit_40.setText(b[23])
+    #                 self.ui2.lineEdit_41.setText(b[24])
+    #                 self.ui2.lineEdit_42.setText(b[25])
+    #                 self.ui2.lineEdit_43.setText(b[26])
+    #                 self.ui2.lineEdit_44.setText(b[27])
+    #                 self.ui2.boxStatus_28.setCurrentText(b[28])
+    #                 self.ui2.boxStatus_29.setCurrentText(b[29])
+    #                 self.ui2.lineEdit_47.setText(b[30])
+    #                 self.ui2.lineEdit_48.setText(b[31])
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_58.setText(b[4])
+    #                 self.ui2.lineEdit_64.setText(b[5])
+    #                 self.ui2.lineEdit_45.setText(b[3])
+    #                 self.ui2.lineEdit_46.setText(b[2])
+    #
+    #         elif type_of_component == 'Resistor':
+    #             self.ui2.tabWidget.setCurrentIndex(1)
+    #             self.ui2.groupBox_2.setEnabled(False)
+    #             self.ui2.groupBox_4.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_24.setText(b[0])
+    #                 self.ui2.lineEdit_18.setText(b[1])
+    #                 self.ui2.lineEdit_19.setText(b[2])
+    #                 self.ui2.lineEdit_20.setText(b[3])
+    #                 self.ui2.lineEdit_21.setText(b[4])
+    #                 self.ui2.lineEdit_22.setText(b[5])
+    #                 self.ui2.boxStatus_15.setCurrentText(b[6])
+    #                 self.ui2.boxStatus_2.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_25.setText(b[8])
+    #                 self.ui2.lineEdit_26.setText(b[9])
+    #                 self.ui2.lineEdit_27.setText(b[10])
+    #                 self.ui2.lineEdit_28.setText(b[11])
+    #                 self.ui2.lineEdit_29.setText(b[12])
+    #                 self.ui2.lineEdit_30.setText(b[13])
+    #                 self.ui2.boxStatus_16.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_49.setText(b[16])
+    #                 self.ui2.lineEdit_50.setText(b[17])
+    #                 self.ui2.lineEdit_51.setText(b[18])
+    #                 self.ui2.lineEdit_52.setText(b[19])
+    #                 self.ui2.lineEdit_53.setText(b[20])
+    #                 self.ui2.lineEdit_54.setText(b[21])
+    #                 self.ui2.lineEdit_55.setText(b[22])
+    #                 self.ui2.lineEdit_56.setText(b[23])
+    #                 self.ui2.lineEdit_57.setText(b[24])
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_73.setText(b[4])
+    #                 self.ui2.lineEdit_85.setText(b[5])
+    #                 self.ui2.lineEdit_178.setText(b[3])
+    #                 self.ui2.lineEdit_201.setText(b[2])
+    #
+    #         elif type_of_component == 'Transistor':
+    #             self.ui2.tabWidget.setCurrentIndex(2)
+    #             self.ui2.groupBox_7.setEnabled(False)
+    #             self.ui2.groupBox_8.setEnabled(False)
+    #
+    #             mydb = mysql.connector.connect(
+    #                 host="mysql.ektos.net",
+    #                 user="dpe",
+    #                 passwd="dpe",
+    #                 database="dpe",
+    #                 charset='utf8',
+    #             )
+    #             mycursor = mydb.cursor()
+    #             a = 'Part_Number'
+    #             b = table1
+    #             c = found_item
+    #             fixed1 = ''.join(c.split(")"))
+    #             fixed2 = ''.join(fixed1.split("("))
+    #             fixed3 = ''.join(fixed2.split("'"))
+    #             fixed3 = ''.join(fixed3.split(","))
+    #             mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #             counter = -1
+    #             for data12 in mycursor:
+    #                 b = data12
+    #                 for i in data12:
+    #                     counter += 1
+    #             if b[13] != '':
+    #                 self.ui2.label_265.setText("This component has been reviewed")
+    #                 self.ui2.lineEdit_176.setEnabled(False)
+    #             else:
+    #                 self.ui2.lineEdit_65.setText(b[0])
+    #                 self.ui2.lineEdit_59.setText(b[1])
+    #                 self.ui2.lineEdit_60.setText(b[2])
+    #                 self.ui2.lineEdit_61.setText(b[3])
+    #                 self.ui2.lineEdit_62.setText(b[4])
+    #                 self.ui2.lineEdit_63.setText(b[5])
+    #                 self.ui2.boxStatus_14.setCurrentText(b[6])
+    #                 self.ui2.boxStatus_3.setCurrentText(b[7])
+    #                 self.ui2.lineEdit_66.setText(b[8])
+    #                 self.ui2.lineEdit_67.setText(b[9])
+    #                 self.ui2.lineEdit_68.setText(b[10])
+    #                 self.ui2.lineEdit_69.setText(b[11])
+    #                 self.ui2.lineEdit_70.setText(b[12])
+    #                 self.ui2.lineEdit_71.setText(b[13])
+    #                 self.ui2.boxStatus_13.setCurrentText(b[15])
+    #                 self.ui2.lineEdit_74.setText(b[16])
+    #                 self.ui2.lineEdit_75.setText(b[17])
+    #                 self.ui2.lineEdit_76.setText(b[18])
+    #                 self.ui2.lineEdit_77.setText(b[19])
+    #                 self.ui2.lineEdit_78.setText(b[20])
+    #                 self.ui2.lineEdit_79.setText(b[21])
+    #                 self.ui2.lineEdit_80.setText(b[22])
+    #                 self.ui2.lineEdit_81.setText(b[23])
+    #                 self.ui2.lineEdit_82.setText(b[24])
+    #                 self.ui2.lineEdit_83.setText(b[25])
+    #                 self.ui2.lineEdit_84.setText(b[26])
+    #                 b = table2
+    #                 mycursor.execute("SELECT * FROM {} WHERE {} = '{}'".format(b, a, fixed3))
+    #                 for data12 in mycursor:
+    #                     b = data12
+    #                 self.ui2.lineEdit_91.setText(b[4])
+    #                 self.ui2.lineEdit_100.setText(b[5])
+    #                 self.ui2.lineEdit_129.setText(b[3])
+    #                 self.ui2.lineEdit_154.setText(b[2])
 
     def edit_component(self):
         type_of_component = self.ui2.boxSearch1.currentText()
